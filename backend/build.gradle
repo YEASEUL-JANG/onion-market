@@ -24,7 +24,12 @@ repositories {
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	// JPA 의존성 추가
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+	// MySQL 드라이버 추가 (필요한 데이터베이스 드라이버로 변경 가능)
+	implementation 'mysql:mysql-connector-java:8.0.33'
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
