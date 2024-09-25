@@ -17,7 +17,7 @@ public class UserController {
 
 
     //유저 생성
-    @PostMapping("")
+    @PostMapping("/signUp")
     public ResponseEntity<User> createUser(@RequestParam("username") String username,
                                            @RequestParam("password") String password,
                                            @RequestParam("email") String email){
