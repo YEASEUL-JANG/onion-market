@@ -17,11 +17,19 @@ public class UserController {
 
 
     //유저 생성
-    @PostMapping("/create")
+    @PostMapping("")
     public ResponseEntity<User> createUser(@RequestParam("username") String username,
                                            @RequestParam("password") String password,
                                            @RequestParam("email") String email){
         User user = userService.createUser(username, password, email);
         return ResponseEntity.ok(user);
+    }
+
+    //유저 삭제
+    @DeleteMapping("/{userId}")
+    public ResponseEntity<Void> deleteUser(
+            @PathVariable("userId") Long userId){
+        userService.deleteUser(userId);
+        return ResponseEntity.noContent().build();
     }
 }

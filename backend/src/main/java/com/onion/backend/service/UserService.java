@@ -39,4 +39,9 @@ public class UserService {
         // 유저 저장
         return userRepository.save(user);
     }
+
+    //유저 삭제
+    public void deleteUser(Long userId){
+        userRepository.deleteById(userId);
+    }
 }
