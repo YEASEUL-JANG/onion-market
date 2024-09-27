@@ -3,6 +3,7 @@ package com.onion.backend.controller;
 import com.onion.backend.dto.LoginForm;
 import com.onion.backend.dto.LoginResponse;
 import com.onion.backend.dto.SignUpUser;
+import com.onion.backend.dto.TokenValidationRequest;
 import com.onion.backend.entity.User;
 import com.onion.backend.jwt.JwtUtil;
 import com.onion.backend.service.CustomUserDetailsService;
@@ -16,6 +17,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/users")
@@ -40,6 +42,13 @@ public class UserController {
         User user = userService.createUser(signUpUser);
         return ResponseEntity.ok(user);
     }
+    //유저 삭제
+    @DeleteMapping("/delete/{userId}")
+    public ResponseEntity<Void> deleteUser(
+            @PathVariable("userId") Long userId){
+        userService.deleteUser(userId);
+        return ResponseEntity.noContent().build();
+    }
 
     // 로그인 API
     @PostMapping("/login")
@@ -59,11 +68,16 @@ public class UserController {
         }
     }
 
-    //유저 삭제
-    @DeleteMapping("/delete/{userId}")
-    public ResponseEntity<Void> deleteUser(
-            @PathVariable("userId") Long userId){
-        userService.deleteUser(userId);
-        return ResponseEntity.noContent().build();
+    // 토큰 유효성검사
+    @PostMapping("/token/validate")
+    @ResponseStatus(HttpStatus.OK)
+    public void jwtValidate(@RequestBody TokenValidationRequest request){
+        String token = request.getToken();
+        String username = request.getUsername();
+        boolean isValid = jwtUtil.validateToken(token,username);
+        if (!isValid){
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,"토큰이 유효하지 않습니다.");
+        }
     }
+
 }

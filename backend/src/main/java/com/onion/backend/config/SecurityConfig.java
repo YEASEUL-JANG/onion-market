@@ -23,7 +23,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())  // CSRF 비활성화
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html",
-                                "/api/users/signUp", "/api/users/login")
+                                "/api/users/signUp", "/api/users/login", "/api/users/token/validate")
                         .permitAll()  // 인증 없이 접근 가능
                         .anyRequest().authenticated()
                 );
