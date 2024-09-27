@@ -8,6 +8,8 @@ import com.onion.backend.entity.User;
 import com.onion.backend.jwt.JwtUtil;
 import com.onion.backend.service.CustomUserDetailsService;
 import com.onion.backend.service.UserService;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -52,7 +54,7 @@ public class UserController {
 
     // 로그인 API
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginForm loginForm){
+    public ResponseEntity<?> login(@RequestBody LoginForm loginForm, HttpServletResponse response){
         try{
         //사용자 인증처리
         Authentication authentication = authenticationManager.authenticate(
@@ -60,12 +62,36 @@ public class UserController {
         //인증 성공 시, UserDetails 객체를 통해 사용자 정보 가져옴
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         // JWT 토큰 생성
-        String token = jwtUtil.generateToken(userDetails.getUsername());
+        String jwtToken = jwtUtil.generateToken(userDetails.getUsername());
 
-        return ResponseEntity.ok(new LoginResponse(token));
+            // JWT 토큰을 쿠키에 저장
+            Cookie jwtCookie = new Cookie("jwtToken", jwtToken);
+            jwtCookie.setHttpOnly(true); // XSS 공격 방지 (JavaScript로 접근 불가능)
+            jwtCookie.setSecure(true);   // HTTPS에서만 전송 (보안 강화)
+            jwtCookie.setPath("/");      // 쿠키의 적용 범위 설정
+            jwtCookie.setMaxAge(60 * 60); // 쿠키 유효기간 설정 (1시간)
+
+            // 쿠키를 응답에 추가
+            response.addCookie(jwtCookie);
+
+            return ResponseEntity.ok("login success");
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username or password");
         }
+    }
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(HttpServletResponse response) {
+        // JWT 토큰을 삭제하기 위한 쿠키 설정
+        Cookie jwtCookie = new Cookie("jwtToken", null); // 쿠키 값을 null로 설정
+        jwtCookie.setHttpOnly(true); // 동일한 설정으로 보안 유지
+        jwtCookie.setSecure(true);
+        jwtCookie.setPath("/");      // 동일한 Path
+        jwtCookie.setMaxAge(0);      // 쿠키 만료시간을 0으로 설정하여 삭제
+
+        // 쿠키를 응답에 추가 (쿠키 삭제)
+        response.addCookie(jwtCookie);
+
+        return ResponseEntity.ok("logout success");
     }
 
     // 토큰 유효성검사
