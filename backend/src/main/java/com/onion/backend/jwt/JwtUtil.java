@@ -1,13 +1,17 @@
 package com.onion.backend.jwt;
 
+import com.onion.backend.service.JwtBlacklistService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Date;
 import java.util.function.Function;
 @Component
@@ -17,6 +21,10 @@ public class JwtUtil {
 
     @Value("${jwt.expiration}")
     private long expirationTime;
+
+    @Autowired
+    private JwtBlacklistService jwtBlacklistService;
+
 
     // 사용자 이름으로 JWT 토큰 생성
     public String generateToken(String username) {
@@ -45,6 +53,13 @@ public class JwtUtil {
     }
     // JWT 토큰 유효성 검사
     public boolean validateToken(String token,  String username) {
+        // 토큰이 블랙리스트에 있으면 유효하지 않음
+        Date issuedAt = extractIssuedAt(token);
+        LocalDateTime issuedAtDateTime = issuedAt.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+
+        if (jwtBlacklistService.isTokenBlacklisted(username, issuedAtDateTime)) {
+            return false;
+        }
         final String extractedUsername = extractUsername(token);
         return (extractedUsername.equals(username) && !isTokenExpired(token));
     }
@@ -63,5 +78,9 @@ public class JwtUtil {
     // 토큰에서 사용자 이름 추출
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
+    }
+
+    public Date extractIssuedAt(String currentToken) {
+        return extractAllClaims(currentToken).getIssuedAt(); // JWT의 "iat" 클레임 추출
     }
 }

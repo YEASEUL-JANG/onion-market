@@ -7,8 +7,10 @@ import com.onion.backend.dto.TokenValidationRequest;
 import com.onion.backend.entity.User;
 import com.onion.backend.jwt.JwtUtil;
 import com.onion.backend.service.CustomUserDetailsService;
+import com.onion.backend.service.JwtBlacklistService;
 import com.onion.backend.service.UserService;
 import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -21,6 +23,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
+
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
@@ -28,6 +32,9 @@ public class UserController {
     private final AuthenticationManager authenticationManager;
     private final CustomUserDetailsService userDetailsService;
     private final JwtUtil jwtUtil;
+
+    @Autowired
+    private JwtBlacklistService jwtBlacklistService;
     @Autowired
     public UserController(UserService userService, AuthenticationManager authenticationManager,
                           CustomUserDetailsService userDetailsService, JwtUtil jwtUtil) {
@@ -79,17 +86,39 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username or password");
         }
     }
+    //단순 로그아웃 -> 현재 브라우저에 있는 쿠키만 삭제
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpServletResponse response) {
-        // JWT 토큰을 삭제하기 위한 쿠키 설정
-        Cookie jwtCookie = new Cookie("jwtToken", null); // 쿠키 값을 null로 설정
-        jwtCookie.setHttpOnly(true); // 동일한 설정으로 보안 유지
-        jwtCookie.setSecure(true);
-        jwtCookie.setPath("/");      // 동일한 Path
-        jwtCookie.setMaxAge(0);      // 쿠키 만료시간을 0으로 설정하여 삭제
+            // 쿠키 삭제
+            Cookie jwtCookie = new Cookie("jwtToken", null);
+            jwtCookie.setHttpOnly(true);
+            jwtCookie.setSecure(true);
+            jwtCookie.setPath("/");
+            jwtCookie.setMaxAge(0); // 쿠키 만료
+            response.addCookie(jwtCookie);
+        return ResponseEntity.ok("logout success");
+    }
+    //모든 기기에 대하여 로그아웃 -> 토큰을 확인하여 블랙리스트에 추가함
+    @PostMapping("/logout/all")
+    public ResponseEntity<?> logoutAll(@RequestParam(name="requestToken",required = false) String requestToken,
+                                    @CookieValue(value = "jwtToken",required = false) String cookieToken, HttpServletResponse response) {
+        String token = requestToken!=null?requestToken:cookieToken;
+        if (token != null) {
+            //현재 시간을 로그아웃 시점으로 저장
+            LocalDateTime now = LocalDateTime.now();
+            //유저네임 가져오기
+            String username = jwtUtil.extractUsername(token);
+            // 토큰을 블랙리스트에 추가
+            jwtBlacklistService.addTokenToBlacklist(token, now,username);
 
-        // 쿠키를 응답에 추가 (쿠키 삭제)
-        response.addCookie(jwtCookie);
+            // 쿠키 삭제
+            Cookie jwtCookie = new Cookie("jwtToken", null);
+            jwtCookie.setHttpOnly(true);
+            jwtCookie.setSecure(true);
+            jwtCookie.setPath("/");
+            jwtCookie.setMaxAge(0); // 쿠키 만료
+            response.addCookie(jwtCookie);
+        }
 
         return ResponseEntity.ok("logout success");
     }
