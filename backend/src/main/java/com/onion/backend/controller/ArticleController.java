@@ -27,14 +27,41 @@ public class ArticleController {
         this.authenticationManager = authenticationManager;
     }
 
+    /**
+     * 게시글 발행
+     * @param boardId
+     * @param articleDto
+     * @return
+     */
     @PostMapping("/{boardId}/articles")
     public ResponseEntity<Article> writeArticle(@PathVariable(value = "boardId") Long boardId, @RequestBody ArticleDto articleDto) {
         return ResponseEntity.ok(articleService.writeArticle(articleDto, boardId));
     }
+
+    /**
+     * 게시글 조회
+     * @param boardId
+     * @param page
+     * @return
+     */
     @GetMapping("/{boardId}/articles")
     public ResponseEntity<Page<Article>> getArticlesByBoard(@PathVariable(value = "boardId") Long boardId,
                                                             @RequestParam(value = "page" ,defaultValue = "1") int page) {
         Page<Article> articles = articleService.getArticlesBtBoardId(boardId, page);
         return ResponseEntity.ok(articles);
+    }
+
+    /**
+     * 게시글 수정
+     * @param boardId
+     * @param articleId
+     * @param articleDto
+     * @return
+     */
+    @PutMapping("/{boardId}/articles/{articleId}")
+    public ResponseEntity<Article> editArticle(@PathVariable(value = "boardId") Long boardId,
+                                                     @PathVariable(value = "articleId") Long articleId,
+                                                     @RequestBody ArticleDto articleDto) {
+        return ResponseEntity.ok(articleService.editArticle(boardId,articleId,articleDto));
     }
 }

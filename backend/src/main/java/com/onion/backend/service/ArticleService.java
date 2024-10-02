@@ -14,6 +14,7 @@ import org.springframework.boot.context.config.ConfigDataResourceNotFoundExcepti
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -26,6 +27,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@Transactional
 public class ArticleService {
     private final ArticleRepository articleRepository;
     private final BoardRepository boardRepository;
@@ -66,5 +68,34 @@ public class ArticleService {
     public Page<Article> getArticlesBtBoardId(Long boardId, int pageNumber){
         Pageable pageable = PageRequest.of(pageNumber - 1, pageSize); // 페이지 번호는 0부터 시작
         return articleRepository.findByBoardIdOrderByCreatedDateDesc(boardId, pageable);
+    }
+
+    public Article editArticle(Long boardId, Long articleId, ArticleDto dto) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        // 1. 작성자 조회
+        Optional<User> author = userRepository.findByUsername(userDetails.getUsername());
+        if(author.isEmpty()){
+            throw new ResourceNotFoundException("가입 유저를 찾을 수 없습니다.");
+        }
+
+        // 2. 게시판 조회
+        Optional<Board> board = boardRepository.findById(boardId);
+        if(board.isEmpty()){
+            throw new ResourceNotFoundException("게시판을 찾을 수 없습니다."+boardId);
+        }
+
+        // 3. 게시글 조회
+        Optional<Article> article = articleRepository.findById(articleId);
+        if(article.isEmpty()){
+            throw new ResourceNotFoundException("게시글을 찾을 수 없습니다."+articleId);
+        }
+
+        // 4. 엔티티 필드 변경
+        Article existingArticle = article.get();  // Optional에서 엔티티 꺼내기
+        existingArticle.setTitle(dto.getTitle());
+        existingArticle.setContent(dto.getContent());
+        //* 변경감지로 DB데이터 업데이트
+        return existingArticle;
     }
 }
