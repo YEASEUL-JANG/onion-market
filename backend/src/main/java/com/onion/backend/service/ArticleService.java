@@ -11,6 +11,9 @@ import com.onion.backend.repository.BoardRepository;
 import com.onion.backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.config.ConfigDataResourceNotFoundException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -19,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -26,6 +30,7 @@ public class ArticleService {
     private final ArticleRepository articleRepository;
     private final BoardRepository boardRepository;
     private final UserRepository userRepository;
+    private final Integer pageSize = 10;
     @Autowired
     public ArticleService(ArticleRepository articleRepository, BoardRepository boardRepository, UserRepository userRepository) {
         this.articleRepository = articleRepository;
@@ -50,6 +55,7 @@ public class ArticleService {
                 .title(articleDto.getTitle())
                 .content(articleDto.getContent())
                 .author(author.get())
+                .authorName(author.get().getUsername())
                 .board(board.get())
                 .build();
 
@@ -57,5 +63,8 @@ public class ArticleService {
         return article;
     }
 
-
+    public Page<Article> getArticlesBtBoardId(Long boardId, int pageNumber){
+        Pageable pageable = PageRequest.of(pageNumber - 1, pageSize); // 페이지 번호는 0부터 시작
+        return articleRepository.findByBoardIdOrderByCreatedDateDesc(boardId, pageable);
+    }
 }

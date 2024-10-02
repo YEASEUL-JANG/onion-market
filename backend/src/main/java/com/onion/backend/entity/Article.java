@@ -1,5 +1,6 @@
 package com.onion.backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Builder;
 import lombok.Getter;
@@ -30,10 +31,15 @@ public class Article {
     private String content;
 
     @ManyToOne
+    @JsonIgnore
     @JoinColumn(foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT)) //실제로 외래키를 세팅하지 않음.
     private User author;
 
+    @Column(nullable = false)
+    private String authorName;
+
     @ManyToOne
+    @JsonIgnore
     @JoinColumn(foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     private Board board;
 
@@ -47,10 +53,11 @@ public class Article {
     private LocalDateTime updatedDate;
 
     @Builder
-    public Article(String title, String content, User author, Board board) {
+    public Article(String title, String content, User author, Board board, String authorName) {
         this.title = title;
         this.content = content;
         this.author = author;
         this.board = board;
+        this.authorName = authorName;
     }
 }
