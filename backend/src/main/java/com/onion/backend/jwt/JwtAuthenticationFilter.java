@@ -1,4 +1,5 @@
 package com.onion.backend.jwt;
+
 import com.onion.backend.service.JwtBlacklistService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -31,16 +32,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         this.userDetailsService = userDetailsService;
         this.jwtBlacklistService = jwtBlacklistService;
     }
-    private String resolveToken(HttpServletRequest request){
+
+    private String resolveToken(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
-        if(bearerToken!=null && bearerToken.startsWith("Bearer ")){
+        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7);
         }
-        if (bearerToken == null){
+        if (bearerToken == null) {
             Cookie[] cookies = request.getCookies();
-            if (cookies != null){
-                for (Cookie cookie:cookies){
-                    if("jwtToken".equals(cookie.getName())){
+            if (cookies != null) {
+                for (Cookie cookie : cookies) {
+                    if ("jwtToken".equals(cookie.getName())) {
                         return cookie.getValue();
                     }
                 }
@@ -52,34 +54,41 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
-        String jwt = resolveToken(request);
-        if (jwt == null) {
-            // JWT가 없으면 필터 체인을 그대로 진행
-            chain.doFilter(request, response);
-            return;
-        }
-        String username = jwtUtil.extractUsername(jwt);
-
-        // 현재 토큰의 발급 시간 (issuedAt) 추출
-        Date issuedAt = jwtUtil.extractIssuedAt(jwt);
-        LocalDateTime issuedAtDateTime = issuedAt.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
-
-
-        // 블랙리스트에 토큰이 있는지 확인
-        if (jwt != null && jwtBlacklistService.isTokenBlacklisted(username,issuedAtDateTime)) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);  // 블랙리스트에 있으면 401 Unauthorized 반환
-            return;  // 필터 체인을 더 이상 진행하지 않고 중단
-        }
-
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
-            if (jwtUtil.validateToken(jwt, userDetails.getUsername())) {
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails, null, userDetails.getAuthorities());
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+        try {
+            String jwt = resolveToken(request);
+            if (jwt == null) {
+                // JWT가 없으면 필터 체인을 그대로 진행
+                chain.doFilter(request, response);
+                return;
             }
+            String username = jwtUtil.extractUsername(jwt);
+
+            // 현재 토큰의 발급 시간 (issuedAt) 추출
+            Date issuedAt = jwtUtil.extractIssuedAt(jwt);
+            LocalDateTime issuedAtDateTime = issuedAt.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+
+
+            // 블랙리스트에 토큰이 있는지 확인
+            if (jwt != null && jwtBlacklistService.isTokenBlacklisted(username, issuedAtDateTime)) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);  // 블랙리스트에 있으면 401 Unauthorized 반환
+                return;  // 필터 체인을 더 이상 진행하지 않고 중단
+            }
+
+            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
+                if (jwtUtil.validateToken(jwt, userDetails.getUsername())) {
+                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                            userDetails, null, userDetails.getAuthorities());
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                }
+            }
+            chain.doFilter(request, response);
+        } catch (Exception e) {
+            // 예외 발생 시 로깅
+            e.printStackTrace();
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         }
-        chain.doFilter(request, response);
+
     }
 }
