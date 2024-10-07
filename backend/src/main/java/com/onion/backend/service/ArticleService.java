@@ -5,6 +5,7 @@ import com.onion.backend.dto.SignUpUser;
 import com.onion.backend.entity.Article;
 import com.onion.backend.entity.Board;
 import com.onion.backend.entity.User;
+import com.onion.backend.exception.ForbiddenException;
 import com.onion.backend.exception.ResourceNotFoundException;
 import com.onion.backend.repository.ArticleRepository;
 import com.onion.backend.repository.BoardRepository;
@@ -46,13 +47,6 @@ public class ArticleService {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         Optional<User> author = userRepository.findByUsername(userDetails.getUsername());
         Optional<Board> board = boardRepository.findById(boardId);
-        if(author.isEmpty()){
-            throw new ResourceNotFoundException("가입 유저를 찾을 수 없습니다.");
-        }
-        if(board.isEmpty()){
-            throw new ResourceNotFoundException("게시판을 찾을 수 없습니다."+boardId);
-        }
-
         Article article = Article.builder()
                 .title(articleDto.getTitle())
                 .content(articleDto.getContent())
@@ -71,31 +65,19 @@ public class ArticleService {
     }
 
     public Article editArticle(Long boardId, Long articleId, ArticleDto dto) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        // 1. 작성자 조회
-        Optional<User> author = userRepository.findByUsername(userDetails.getUsername());
-        if(author.isEmpty()){
-            throw new ResourceNotFoundException("가입 유저를 찾을 수 없습니다.");
-        }
-
-        // 2. 게시판 조회
-        Optional<Board> board = boardRepository.findById(boardId);
-        if(board.isEmpty()){
-            throw new ResourceNotFoundException("게시판을 찾을 수 없습니다."+boardId);
-        }
-
-        // 3. 게시글 조회
         Optional<Article> article = articleRepository.findById(articleId);
-        if(article.isEmpty()){
-            throw new ResourceNotFoundException("게시글을 찾을 수 없습니다."+articleId);
-        }
-
-        // 4. 엔티티 필드 변경
+        // 엔티티 필드 변경
         Article existingArticle = article.get();  // Optional에서 엔티티 꺼내기
         existingArticle.setTitle(dto.getTitle());
         existingArticle.setContent(dto.getContent());
+
         //* 변경감지로 DB데이터 업데이트
         return existingArticle;
+    }
+
+    public void deleteArticle(Long boardId, Long articleId) {
+
+
+
     }
 }
