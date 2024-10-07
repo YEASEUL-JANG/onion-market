@@ -61,7 +61,7 @@ public class ArticleService {
 
     public Page<Article> getArticlesBtBoardId(Long boardId, int pageNumber){
         Pageable pageable = PageRequest.of(pageNumber - 1, pageSize); // 페이지 번호는 0부터 시작
-        return articleRepository.findByBoardIdOrderByCreatedDateDesc(boardId, pageable);
+        return articleRepository.findByBoardIdAndIsDeletedFalseOrderByCreatedDateDesc(boardId, pageable);
     }
 
     public Article editArticle(Long boardId, Long articleId, ArticleDto dto) {
@@ -76,8 +76,7 @@ public class ArticleService {
     }
 
     public void deleteArticle(Long boardId, Long articleId) {
-
-
-
+        Optional<Article> article = articleRepository.findById(articleId);
+        article.get().setIsDeleted(true);
     }
 }

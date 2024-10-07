@@ -52,6 +52,10 @@ public class Article {
     @LastModifiedDate //코드레벨에서만 적용
     private LocalDateTime updatedDate;
 
+    @Column(nullable = false)
+    private Boolean isDeleted = false;
+
+
     @Builder
     public Article(String title, String content, User author, Board board, String authorName) {
         this.title = title;
