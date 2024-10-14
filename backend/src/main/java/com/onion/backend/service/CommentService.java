@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import java.util.Optional;
 
 @Service
-@Transactional
 public class CommentService {
     private final ArticleRepository articleRepository;
     private final CommentRepository commentRepository;
@@ -43,7 +42,7 @@ public class CommentService {
      * @return
      */
 
-
+    @Transactional
     public CommentResDto writeComment(@RequestBody CommentReqDto commentReqDto, Long boardId, Long articleId) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
@@ -71,7 +70,7 @@ public class CommentService {
      * @param dto
      * @return
      */
-
+    @Transactional
     public CommentResDto editComment(Long articleId, Long commentId, CommentReqDto dto) {
         Optional<Comment> comment = commentRepository.findById(articleId);
         // 엔티티 필드 변경
@@ -90,7 +89,7 @@ public class CommentService {
      * @param articleId
      * @param commentId
      */
-
+    @Transactional
     public void deleteComment(Long boardId, Long articleId, Long commentId) {
         Optional<Comment> comment = commentRepository.findById(commentId);
         comment.get().setIsDeleted(true);

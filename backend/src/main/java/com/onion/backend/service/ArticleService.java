@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-@Transactional
 public class ArticleService {
     private final ArticleRepository articleRepository;
     private final BoardRepository boardRepository;
@@ -36,7 +35,7 @@ public class ArticleService {
         this.boardRepository = boardRepository;
         this.userRepository = userRepository;
     }
-
+    @Transactional
     public ArticleResDto writeArticle(@RequestBody ArticleReqDto articleReqDto, Long boardId){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
@@ -53,14 +52,14 @@ public class ArticleService {
         articleRepository.save(article);
         return getArticleResDto(article);
     }
-
+    @Transactional(readOnly = true)
     public Page<ArticleResDto> getArticlesBtBoardId(Long boardId, int pageNumber){
         Pageable pageable = PageRequest.of(pageNumber - 1, pageSize); // 페이지 번호는 0부터 시작
         Page<Article> articlePage =  articleRepository.findByBoardIdAndIsDeletedFalseOrderByCreatedDateDesc(boardId, pageable);
 
         return articlePage.map(ArticleService::getArticleResDto);
     }
-
+    @Transactional
     public ArticleResDto editArticle(Long boardId, Long articleId, ArticleReqDto dto) {
         Optional<Article> optionalArticle = articleRepository.findById(articleId);
 
@@ -71,12 +70,12 @@ public class ArticleService {
 
         return getArticleResDto(article);
     }
-
+    @Transactional
     public void deleteArticle(Long boardId, Long articleId) {
         Optional<Article> article = articleRepository.findById(articleId);
         article.get().setIsDeleted(true);
     }
-
+    @Transactional(readOnly = true)
     public ArticleResDto getArticleWithComments(Long boardId, Long articleId){
         Optional<Article> optionalArticle = articleRepository.findById(articleId);
         Article article = optionalArticle.get();  // Optional에서 엔티티 꺼내기
