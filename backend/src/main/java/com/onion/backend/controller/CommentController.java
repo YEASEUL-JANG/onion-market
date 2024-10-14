@@ -1,6 +1,7 @@
 package com.onion.backend.controller;
 
 import com.onion.backend.dto.CommentReqDto;
+import com.onion.backend.dto.CommentResDto;
 import com.onion.backend.entity.Comment;
 import com.onion.backend.service.CommentService;
 import org.springframework.data.domain.Page;
@@ -25,9 +26,9 @@ public class CommentController {
      * @return
      */
     @PostMapping("/{boardId}/articles/{articleId}/comment")
-    public ResponseEntity<Comment> writeComment(@PathVariable(value = "boardId") Long boardId,
-                                                @PathVariable(value = "articleId") Long articleId,
-                                                @RequestBody CommentReqDto commentReqDto) {
+    public ResponseEntity<CommentResDto> writeComment(@PathVariable(value = "boardId") Long boardId,
+                                                      @PathVariable(value = "articleId") Long articleId,
+                                                      @RequestBody CommentReqDto commentReqDto) {
         return ResponseEntity.ok(commentService.writeComment(commentReqDto,boardId, articleId));
     }
 
@@ -39,7 +40,7 @@ public class CommentController {
      * @return
      */
     @PutMapping("/{boardId}/articles/{articleId}/comment/{commentId}")
-    public ResponseEntity<Comment> editComment(@PathVariable(value = "boardId") Long boardId,
+    public ResponseEntity<CommentResDto> editComment(@PathVariable(value = "boardId") Long boardId,
                                                 @PathVariable(value = "articleId") Long articleId,
                                                 @PathVariable(value = "commentId") Long commentId,
                                                 @RequestBody CommentReqDto commentReqDto) {
@@ -57,6 +58,6 @@ public class CommentController {
                                                @PathVariable(value = "articleId") Long articleId,
                                                 @PathVariable(value = "commentId") Long commentId) {
         commentService.deleteComment(articleId,commentId);
-        return ResponseEntity.ok("delete success");
+        return ResponseEntity.ok("success");
     }
 }

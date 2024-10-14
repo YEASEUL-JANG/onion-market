@@ -1,6 +1,7 @@
 package com.onion.backend.service;
 
 import com.onion.backend.dto.CommentReqDto;
+import com.onion.backend.dto.CommentResDto;
 import com.onion.backend.entity.Article;
 import com.onion.backend.entity.Comment;
 import com.onion.backend.entity.User;
@@ -35,6 +36,7 @@ public class CommentService {
 
     /**
      * 댓글 작성
+     *
      * @param commentReqDto
      * @param boardId
      * @param articleId
@@ -42,7 +44,7 @@ public class CommentService {
      */
 
 
-    public Comment writeComment(@RequestBody CommentReqDto commentReqDto, Long boardId, Long articleId){
+    public CommentResDto writeComment(@RequestBody CommentReqDto commentReqDto, Long boardId, Long articleId) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         Optional<User> author = userRepository.findByUsername(userDetails.getUsername());
@@ -55,21 +57,41 @@ public class CommentService {
                 .article(article.get())
                 .build();
 
-        commentRepository.save(comment);
-        return comment;
+        Comment savedComment = commentRepository.save(comment);
+        return CommentResDto.builder()
+                .id(savedComment.getId())
+                .content(savedComment.getContent())
+                .authorName(savedComment.getAuthorName()).build();
     }
 
-    public Comment editComment(Long articleId, Long commentId, CommentReqDto dto) {
+    /**
+     * 댓글 수정
+     * @param articleId
+     * @param commentId
+     * @param dto
+     * @return
+     */
+
+    public CommentResDto editComment(Long articleId, Long commentId, CommentReqDto dto) {
         Optional<Comment> comment = commentRepository.findById(articleId);
         // 엔티티 필드 변경
         Comment existingComment = comment.get();  // Optional에서 엔티티 꺼내기
         existingComment.setContent(dto.getContent());
 
         //* 변경감지로 DB데이터 업데이트
-        return existingComment;
+        return CommentResDto.builder()
+                .id(existingComment.getId())
+                .content(existingComment.getContent())
+                .authorName(existingComment.getAuthorName()).build();
     }
 
-    public void deleteComment(Long articleId,Long commentId) {
+    /**
+     * 댓글 삭제
+     * @param articleId
+     * @param commentId
+     */
+
+    public void deleteComment(Long articleId, Long commentId) {
         Optional<Comment> comment = commentRepository.findById(commentId);
         comment.get().setIsDeleted(true);
     }
