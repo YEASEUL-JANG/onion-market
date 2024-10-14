@@ -91,7 +91,7 @@ public class CommentService {
      * @param commentId
      */
 
-    public void deleteComment(Long articleId, Long commentId) {
+    public void deleteComment(Long boardId, Long articleId, Long commentId) {
         Optional<Comment> comment = commentRepository.findById(commentId);
         comment.get().setIsDeleted(true);
     }

@@ -23,7 +23,6 @@ public class ArticleController {
         this.articleService = articleService;
         this.authenticationManager = authenticationManager;
     }
-
     /**
      * 게시글 발행
      * @param boardId
@@ -85,5 +84,6 @@ public class ArticleController {
         ArticleResDto articleResDto = articleService.getArticleWithComments(boardId,articleId);
         return ResponseEntity.ok(articleResDto);
     }
+
 
 }
