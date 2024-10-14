@@ -1,26 +1,23 @@
 package com.onion.backend.controller;
 
-import com.onion.backend.dto.ArticleDto;
+import com.onion.backend.dto.ArticleReqDto;
+import com.onion.backend.dto.ArticleResDto;
 import com.onion.backend.entity.Article;
-import com.onion.backend.entity.User;
 import com.onion.backend.service.ArticleService;
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @RestController
 @RequestMapping("/api/boards")
 public class ArticleController {
     private final ArticleService articleService;
     private final AuthenticationManager authenticationManager;
+
 
     public ArticleController(ArticleService articleService, AuthenticationManager authenticationManager) {
         this.articleService = articleService;
@@ -30,12 +27,12 @@ public class ArticleController {
     /**
      * 게시글 발행
      * @param boardId
-     * @param articleDto
+     * @param articleReqDto
      * @return
      */
     @PostMapping("/{boardId}/articles")
-    public ResponseEntity<Article> writeArticle(@PathVariable(value = "boardId") Long boardId, @RequestBody ArticleDto articleDto) {
-        return ResponseEntity.ok(articleService.writeArticle(articleDto, boardId));
+    public ResponseEntity<ArticleResDto> writeArticle(@PathVariable(value = "boardId") Long boardId, @RequestBody ArticleReqDto articleReqDto) {
+        return ResponseEntity.ok(articleService.writeArticle(articleReqDto, boardId));
     }
 
     /**
@@ -45,24 +42,24 @@ public class ArticleController {
      * @return
      */
     @GetMapping("/{boardId}/articles")
-    public ResponseEntity<Page<Article>> getArticlesByBoard(@PathVariable(value = "boardId") Long boardId,
+    public ResponseEntity<Page<ArticleResDto>> getArticlesByBoard(@PathVariable(value = "boardId") Long boardId,
                                                             @RequestParam(value = "page" ,defaultValue = "1") int page) {
-        Page<Article> articles = articleService.getArticlesBtBoardId(boardId, page);
-        return ResponseEntity.ok(articles);
+        Page<ArticleResDto> articleDtos = articleService.getArticlesBtBoardId(boardId, page);
+        return ResponseEntity.ok(articleDtos);
     }
 
     /**
      * 게시글 수정
      * @param boardId
      * @param articleId
-     * @param articleDto
+     * @param articleReqDto
      * @return
      */
     @PutMapping("/{boardId}/articles/{articleId}")
-    public ResponseEntity<Article> editArticle(@PathVariable(value = "boardId") Long boardId,
+    public ResponseEntity<ArticleResDto> editArticle(@PathVariable(value = "boardId") Long boardId,
                                                      @PathVariable(value = "articleId") Long articleId,
-                                                     @RequestBody ArticleDto articleDto) {
-        return ResponseEntity.ok(articleService.editArticle(boardId,articleId,articleDto));
+                                                     @RequestBody ArticleReqDto articleReqDto) {
+        return ResponseEntity.ok(articleService.editArticle(boardId,articleId, articleReqDto));
     }
 
     /**
@@ -75,9 +72,18 @@ public class ArticleController {
     public ResponseEntity<String> deleteArticle(@PathVariable(value = "boardId") Long boardId,
                                                @PathVariable(value = "articleId") Long articleId) {
         articleService.deleteArticle(boardId,articleId);
-        return ResponseEntity.ok("delete success");
+        return ResponseEntity.ok("success");
     }
 
+    /**
+     * 게시글 상세 조회
+     */
 
+    @GetMapping("/{boardId}/articles/{articleId}")
+    public ResponseEntity<ArticleResDto> getArticleWithComment(@PathVariable(value = "boardId")Long boardId,
+                                                         @PathVariable(value = "articleId")Long articleId){
+        ArticleResDto articleResDto = articleService.getArticleWithComments(boardId,articleId);
+        return ResponseEntity.ok(articleResDto);
+    }
 
 }

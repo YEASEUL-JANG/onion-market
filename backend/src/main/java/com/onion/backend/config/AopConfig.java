@@ -1,5 +1,6 @@
 package com.onion.backend.config;
 
+import com.onion.backend.aop.ArticleAspect;
 import com.onion.backend.repository.ArticleRepository;
 import com.onion.backend.repository.BoardRepository;
 import com.onion.backend.repository.UserRepository;
@@ -7,7 +8,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
-import com.onion.backend.aop.ArticleAspect;
 
 @Configuration
 @EnableAspectJAutoProxy // AOP 프록시 지원 활성화

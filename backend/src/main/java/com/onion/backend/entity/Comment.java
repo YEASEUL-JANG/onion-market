@@ -6,29 +6,22 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.Comments;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Getter
 @Setter
 @NoArgsConstructor
 @EntityListeners(AuditingEntityListener.class) // Auditing 기능을 사용하기 위한 설정
-public class Article {
+public class Comment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
-
-    @Column(nullable = false)
-    private String title;
 
     @Lob
     @Column(nullable = false)
@@ -45,13 +38,9 @@ public class Article {
     @ManyToOne
     @JsonIgnore
     @JoinColumn(foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
-    private Board board;
+    private Article article;
 
-    @OneToMany(mappedBy = "article", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private List<Comment> comments = new ArrayList<>();
-
-
-    // 글이 처음 생성된 날짜 (자동 설정)
+    // 댓글이 처음 생성된 날짜 (자동 설정)
     @CreatedDate
     @Column(insertable = true)
     private LocalDateTime createdDate;
@@ -65,16 +54,10 @@ public class Article {
 
 
     @Builder
-    public Article(String title, String content, User author, Board board, String authorName) {
-        this.title = title;
+    public Comment(String content, User author, Article article, String authorName) {
         this.content = content;
         this.author = author;
-        this.board = board;
+        this.article = article;
         this.authorName = authorName;
-    }
-
-    public String getFormattedCreatedDate() {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy.MM.dd HH:mm");
-        return createdDate != null ? createdDate.format(formatter) : null;
     }
 }

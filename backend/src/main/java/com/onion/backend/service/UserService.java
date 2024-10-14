@@ -1,6 +1,6 @@
 package com.onion.backend.service;
 
-import com.onion.backend.dto.SignUpUser;
+import com.onion.backend.dto.SignUpReq;
 import com.onion.backend.entity.User;
 import com.onion.backend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +23,7 @@ public class UserService {
 
     // 유저 생성 메서드
     @Transactional
-    public User createUser(SignUpUser signUpUser) {
+    public User createUser(SignUpReq signUpUser) {
         // 이미 존재하는 유저가 있는지 확인
         if (userRepository.findByUsername(signUpUser.getUsername()).isPresent()) {
             throw new IllegalArgumentException("유저가 이미 존재합니다.");

@@ -1,8 +1,8 @@
 package com.onion.backend.controller;
 
-import com.onion.backend.dto.LoginForm;
-import com.onion.backend.dto.LoginResponse;
-import com.onion.backend.dto.SignUpUser;
+import com.onion.backend.dto.LoginReqForm;
+import com.onion.backend.dto.LoginResDto;
+import com.onion.backend.dto.SignUpReq;
 import com.onion.backend.dto.TokenValidationRequest;
 import com.onion.backend.entity.User;
 import com.onion.backend.jwt.JwtUtil;
@@ -47,7 +47,7 @@ public class UserController {
 
     //유저 생성
     @PostMapping("/signUp")
-    public ResponseEntity<User> createUser(@RequestBody SignUpUser signUpUser){
+    public ResponseEntity<User> createUser(@RequestBody SignUpReq signUpUser){
         User user = userService.createUser(signUpUser);
         return ResponseEntity.ok(user);
     }
@@ -61,7 +61,7 @@ public class UserController {
 
     // 로그인 API
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginForm loginForm, HttpServletResponse response){
+    public ResponseEntity<?> login(@RequestBody LoginReqForm loginForm, HttpServletResponse response){
         try{
         //사용자 인증처리
         Authentication authentication = authenticationManager.authenticate(

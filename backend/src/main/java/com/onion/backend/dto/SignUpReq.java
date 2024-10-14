@@ -3,7 +3,8 @@ package com.onion.backend.dto;
 import lombok.Getter;
 
 @Getter
-public class LoginForm {
+public class SignUpReq {
     private String username;
     private String password;
+    private String email;
 }

@@ -1,6 +1,5 @@
 package com.onion.backend.dto;
 
-import com.onion.backend.entity.User;
 import lombok.*;
 
 @Getter
@@ -8,7 +7,7 @@ import lombok.*;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class ArticleDto {
+public class ArticleReqDto {
     private String title;
     private String content;
 }
