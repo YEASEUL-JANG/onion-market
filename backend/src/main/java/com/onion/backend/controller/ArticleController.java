@@ -1,5 +1,6 @@
 package com.onion.backend.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.onion.backend.dto.ArticleReqDto;
 import com.onion.backend.dto.ArticleResDto;
 import com.onion.backend.service.ArticleService;
@@ -26,7 +27,8 @@ public class ArticleController {
      * @return
      */
     @PostMapping("/{boardId}/articles")
-    public ResponseEntity<ArticleResDto> writeArticle(@PathVariable(value = "boardId") Long boardId, @RequestBody ArticleReqDto articleReqDto) {
+    public ResponseEntity<ArticleResDto> writeArticle(@PathVariable(value = "boardId") Long boardId, @RequestBody ArticleReqDto articleReqDto)
+            throws JsonProcessingException {
         return ResponseEntity.ok(articleService.writeArticle(articleReqDto, boardId));
     }
 
@@ -53,7 +55,7 @@ public class ArticleController {
     @PutMapping("/{boardId}/articles/{articleId}")
     public ResponseEntity<ArticleResDto> editArticle(@PathVariable(value = "boardId") Long boardId,
                                                      @PathVariable(value = "articleId") Long articleId,
-                                                     @RequestBody ArticleReqDto articleReqDto) {
+                                                     @RequestBody ArticleReqDto articleReqDto) throws JsonProcessingException {
         return ResponseEntity.ok(articleService.editArticle(boardId,articleId, articleReqDto));
     }
 
@@ -65,7 +67,7 @@ public class ArticleController {
      */
     @DeleteMapping("/{boardId}/articles/{articleId}")
     public ResponseEntity<String> deleteArticle(@PathVariable(value = "boardId") Long boardId,
-                                               @PathVariable(value = "articleId") Long articleId) {
+                                               @PathVariable(value = "articleId") Long articleId) throws JsonProcessingException {
         articleService.deleteArticle(boardId,articleId);
         return ResponseEntity.ok("success");
     }
@@ -76,7 +78,7 @@ public class ArticleController {
 
     @GetMapping("/{boardId}/articles/{articleId}")
     public ResponseEntity<ArticleResDto> getArticleWithComment(@PathVariable(value = "boardId")Long boardId,
-                                                         @PathVariable(value = "articleId")Long articleId){
+                                                         @PathVariable(value = "articleId")Long articleId) throws JsonProcessingException {
         ArticleResDto articleResDto = articleService.getArticleWithComments(boardId,articleId);
         return ResponseEntity.ok(articleResDto);
     }
