@@ -53,7 +53,7 @@ public class ArticleService {
         return getArticleResDto(article);
     }
     @Transactional(readOnly = true)
-    public Page<ArticleResDto> getArticlesBtBoardId(Long boardId, int pageNumber){
+    public Page<ArticleResDto> getArticlesByBoardId(Long boardId, int pageNumber){
         Pageable pageable = PageRequest.of(pageNumber - 1, pageSize); // 페이지 번호는 0부터 시작
         Page<Article> articlePage =  articleRepository.findByBoardIdAndIsDeletedFalseOrderByCreatedDateDesc(boardId, pageable);
 
@@ -75,14 +75,17 @@ public class ArticleService {
         Optional<Article> article = articleRepository.findById(articleId);
         article.get().setIsDeleted(true);
     }
-    @Transactional(readOnly = true)
+    @Transactional
     public ArticleResDto getArticleWithComments(Long boardId, Long articleId){
         Optional<Article> optionalArticle = articleRepository.findById(articleId);
         Article article = optionalArticle.get();  // Optional에서 엔티티 꺼내기
+        // 조회수 증가
+        article.setViewCount(article.getViewCount() + 1);
+        articleRepository.save(article);
+
         // Comment 리스트를 DTO로 변환
         return getArticleResDto(article);
     }
-
     private static ArticleResDto getArticleResDto(Article article) {
         List<CommentResDto> commentResDtoList = article.getComments().stream()
                 .map(comment -> new CommentResDto(comment.getId(), comment.getContent(), comment.getAuthorName()))
@@ -94,6 +97,7 @@ public class ArticleService {
                 .title(article.getTitle())
                 .content(article.getContent())
                 .authorName(article.getAuthorName())
+                .viewCount(article.getViewCount())
                 .comments(commentResDtoList)
                 .createdDate(article.getFormattedCreatedDate())
                 .build();

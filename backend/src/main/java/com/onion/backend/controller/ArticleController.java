@@ -2,15 +2,11 @@ package com.onion.backend.controller;
 
 import com.onion.backend.dto.ArticleReqDto;
 import com.onion.backend.dto.ArticleResDto;
-import com.onion.backend.entity.Article;
 import com.onion.backend.service.ArticleService;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 @RestController
 @RequestMapping("/api/boards")
@@ -43,7 +39,7 @@ public class ArticleController {
     @GetMapping("/{boardId}/articles")
     public ResponseEntity<Page<ArticleResDto>> getArticlesByBoard(@PathVariable(value = "boardId") Long boardId,
                                                             @RequestParam(value = "page" ,defaultValue = "1") int page) {
-        Page<ArticleResDto> articleDtos = articleService.getArticlesBtBoardId(boardId, page);
+        Page<ArticleResDto> articleDtos = articleService.getArticlesByBoardId(boardId, page);
         return ResponseEntity.ok(articleDtos);
     }
 

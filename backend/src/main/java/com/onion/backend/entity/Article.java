@@ -63,6 +63,9 @@ public class Article {
     @Column(nullable = false)
     private Boolean isDeleted = false;
 
+    @Column(nullable = false)
+    private Long viewCount;
+
 
     @Builder
     public Article(String title, String content, User author, Board board, String authorName) {
