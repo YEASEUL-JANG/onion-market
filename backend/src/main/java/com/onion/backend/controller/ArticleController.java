@@ -9,6 +9,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/boards")
 public class ArticleController {
@@ -83,5 +85,14 @@ public class ArticleController {
         return ResponseEntity.ok(articleResDto);
     }
 
+    /**
+     * 게시글 키워드 검색
+     */
 
+    @PostMapping("/{boardId}/articles/search")
+    public ResponseEntity<List<ArticleResDto>> searchArticle(@PathVariable(value = "boardId")Long boardId,
+                                                               @RequestParam(value = "keyword",required = true) String keyword) {
+            List<ArticleResDto> articleResDtos = articleService.searchArticle(boardId,keyword);
+            return ResponseEntity.ok(articleResDtos);
+    }
 }

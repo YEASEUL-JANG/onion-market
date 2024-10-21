@@ -15,9 +15,26 @@ public class ElasticsearchService {
     }
     //Mono : 주로 비동기적인 HTTP 응답이나 데이터베이스 조회와 같은 작업에서 사용
 
-    public Mono<String> articleSearch(String query) {
-        return webClient.get()
-                .uri("/article/_search?q=" + query)
+    public Mono<String> searchArticleIdsByKeyword(String keyword) {
+        String searchQuery = """
+        {
+          "_source": false,
+          "query": {
+            "bool": {
+              "should": [
+                { "match": { "title": "%s" }},
+                { "match": { "content": "%s" }}
+              ]
+            }
+          }
+        }
+        """.formatted(keyword, keyword);
+
+        return webClient.post()
+                .uri("/article/_search")
+                .header("Content-Type", "application/json")
+                .header("Accept", "application/json")
+                .bodyValue(searchQuery)
                 .retrieve()
                 .bodyToMono(String.class);
     }

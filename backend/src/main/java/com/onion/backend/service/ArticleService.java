@@ -1,6 +1,7 @@
 package com.onion.backend.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.onion.backend.dto.ArticleReqDto;
 import com.onion.backend.dto.ArticleResDto;
@@ -21,9 +22,12 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
+import reactor.core.publisher.Mono;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class ArticleService {
@@ -122,4 +126,25 @@ public class ArticleService {
         elasticsearchService.indexArticleDocument(article.getId().toString(), articleJson).block();
     }
 
+    public List<ArticleResDto> searchArticle(Long boardId, String keyword) {
+        Mono<String> elasticArticleIds =  elasticsearchService.searchArticleIdsByKeyword(keyword);
+        List<Long> articleIds = elasticArticleIds
+                .map(this::extractIdsFromElasticsearchResponse)
+                .block();
+        assert articleIds != null;
+        List<Article> articles = articleRepository.findAllById(articleIds);
+
+        return articles.stream().map(ArticleService::getArticleResDto).collect(Collectors.toList());
+    }
+
+    private List<Long> extractIdsFromElasticsearchResponse(String response) {
+        try {
+            JsonNode hits = objectMapper.readTree(response).path("hits").path("hits");
+            return hits.findValuesAsText("_id").stream()
+                    .map(Long::parseLong)
+                    .collect(Collectors.toList());
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to parse Elasticsearch response", e);
+        }
+    }
 }
