@@ -1,8 +1,11 @@
 package com.onion.backend.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.onion.backend.dto.AdvertisementReqDto;
+import com.onion.backend.dto.AdvertisementResDto;
 import com.onion.backend.dto.ArticleReqDto;
 import com.onion.backend.dto.ArticleResDto;
+import com.onion.backend.service.AdvertisementService;
 import com.onion.backend.service.ArticleService;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -12,39 +15,34 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/boards")
-public class ArticleController {
-    private final ArticleService articleService;
-    private final AuthenticationManager authenticationManager;
+@RequestMapping("/api")
+public class AdvertisementController {
+    private final AdvertisementService advertisementService;
 
-
-    public ArticleController(ArticleService articleService, AuthenticationManager authenticationManager) {
-        this.articleService = articleService;
-        this.authenticationManager = authenticationManager;
+    public AdvertisementController(AdvertisementService advertisementService) {
+        this.advertisementService = advertisementService;
     }
+
+
     /**
-     * 게시글 발행
-     * @param boardId
-     * @param articleReqDto
+     * 광고 발행
      * @return
      */
-    @PostMapping("/{boardId}/articles")
-    public ResponseEntity<ArticleResDto> writeArticle(@PathVariable(value = "boardId") Long boardId, @RequestBody ArticleReqDto articleReqDto)
-            throws JsonProcessingException {
-        return ResponseEntity.ok(articleService.writeArticle(articleReqDto, boardId));
+    @PostMapping("/advertisement")
+    public ResponseEntity<AdvertisementResDto> writeAdvertisement(@RequestBody AdvertisementReqDto advertisementReqDto)
+    {
+        return ResponseEntity.ok(advertisementService.writeAd(advertisementReqDto));
     }
 
     /**
      * 게시글 조회
-     * @param boardId
      * @param page
      * @return
      */
-    @GetMapping("/{boardId}/articles")
-    public ResponseEntity<Page<ArticleResDto>> getArticlesByBoard(@PathVariable(value = "boardId") Long boardId,
-                                                            @RequestParam(value = "page" ,defaultValue = "1") int page) {
-        Page<ArticleResDto> articleDtos = articleService.getArticlesByBoardId(boardId, page);
-        return ResponseEntity.ok(articleDtos);
+    @GetMapping("/advertisement/all")
+    public ResponseEntity<Page<AdvertisementResDto>> getAdvertisementList(@RequestParam(value = "page" ,defaultValue = "1") int page) {
+        Page<AdvertisementResDto> advertisementResDtos = advertisementService.getAdvertisementList(page);
+        return ResponseEntity.ok(advertisementResDtos);
     }
 
     /**
@@ -54,12 +52,12 @@ public class ArticleController {
      * @param articleReqDto
      * @return
      */
-    @PutMapping("/{boardId}/articles/{articleId}")
-    public ResponseEntity<ArticleResDto> editArticle(@PathVariable(value = "boardId") Long boardId,
-                                                     @PathVariable(value = "articleId") Long articleId,
-                                                     @RequestBody ArticleReqDto articleReqDto) throws JsonProcessingException {
-        return ResponseEntity.ok(articleService.editArticle(boardId,articleId, articleReqDto));
-    }
+//    @PutMapping("/{boardId}/articles/{articleId}")
+//    public ResponseEntity<ArticleResDto> editArticle(@PathVariable(value = "boardId") Long boardId,
+//                                                     @PathVariable(value = "articleId") Long articleId,
+//                                                     @RequestBody ArticleReqDto articleReqDto) throws JsonProcessingException {
+//        return ResponseEntity.ok(articleService.editArticle(boardId,articleId, articleReqDto));
+//    }
 
     /**
      * 게시글 삭제
@@ -67,32 +65,21 @@ public class ArticleController {
      * @param articleId
      * @return
      */
-    @DeleteMapping("/{boardId}/articles/{articleId}")
-    public ResponseEntity<String> deleteArticle(@PathVariable(value = "boardId") Long boardId,
-                                               @PathVariable(value = "articleId") Long articleId) throws JsonProcessingException {
-        articleService.deleteArticle(boardId,articleId);
-        return ResponseEntity.ok("success");
-    }
+//    @DeleteMapping("/{boardId}/articles/{articleId}")
+//    public ResponseEntity<String> deleteArticle(@PathVariable(value = "boardId") Long boardId,
+//                                               @PathVariable(value = "articleId") Long articleId) throws JsonProcessingException {
+//        articleService.deleteArticle(boardId,articleId);
+//        return ResponseEntity.ok("success");
+//    }
 
     /**
      * 게시글 상세 조회
      */
 
-    @GetMapping("/{boardId}/articles/{articleId}")
-    public ResponseEntity<ArticleResDto> getArticleWithComment(@PathVariable(value = "boardId")Long boardId,
-                                                         @PathVariable(value = "articleId")Long articleId) throws JsonProcessingException {
-        ArticleResDto articleResDto = articleService.getArticleWithComments(boardId,articleId);
-        return ResponseEntity.ok(articleResDto);
+    @GetMapping("/advertisement/{adId}")
+    public ResponseEntity<AdvertisementResDto> getAdvertisementById(@PathVariable(value = "adId")Long adId) throws JsonProcessingException {
+        AdvertisementResDto advertisementResDto = advertisementService.getAdvertisement(adId);
+        return ResponseEntity.ok(advertisementResDto);
     }
 
-    /**
-     * 게시글 키워드 검색
-     */
-
-    @PostMapping("/{boardId}/articles/search")
-    public ResponseEntity<List<ArticleResDto>> searchArticle(@PathVariable(value = "boardId")Long boardId,
-                                                               @RequestParam(value = "keyword",required = true) String keyword) {
-            List<ArticleResDto> articleResDtos = articleService.searchArticle(boardId,keyword);
-            return ResponseEntity.ok(articleResDtos);
-    }
 }

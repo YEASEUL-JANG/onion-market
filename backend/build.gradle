@@ -43,6 +43,8 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-aop'
 	//elasticsearch
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+	// Redis 7
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 
 
 
