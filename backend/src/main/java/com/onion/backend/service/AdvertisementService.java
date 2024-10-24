@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -17,15 +18,20 @@ import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
 public class AdvertisementService {
     private final AdvertisementRepository advertisementRepository;
+    private final RedisTemplate<String, Object> redisTemplate;
+    private static final String REDIS_KEY = "ad:";
+
     @Autowired
-    public AdvertisementService(AdvertisementRepository advertisementRepository) {
+    public AdvertisementService(AdvertisementRepository advertisementRepository, RedisTemplate<String, Object> redisTemplate) {
         this.advertisementRepository = advertisementRepository;
+        this.redisTemplate = redisTemplate;
     }
 
 
@@ -38,6 +44,9 @@ public class AdvertisementService {
                 .endDate(advertisementReqDto.getEndDate())
                 .build();
         advertisementRepository.save(advertisement);
+
+        //redis 저장
+        redisTemplate.opsForHash().put(REDIS_KEY+advertisement.getId(),advertisement.getId(), advertisement);
 
         return getAdvertisementDto(advertisement);
     }
@@ -68,11 +77,19 @@ public class AdvertisementService {
 //    }
     @Transactional
     public AdvertisementResDto getAdvertisement(Long adId){
-        Optional<Advertisement> optionalAdvertisement = advertisementRepository.findById(adId);
-        Advertisement advertisement = optionalAdvertisement.get();  // Optional에서 엔티티 꺼내기
-        // 조회수 증가
-        advertisement.setViewCount(advertisement.getViewCount() + 1);
-        advertisementRepository.save(advertisement);
+        Object object =  redisTemplate.opsForHash().get(REDIS_KEY,adId);
+        Advertisement advertisement;
+        if (object!=null){
+            advertisement = (Advertisement) redisTemplate.opsForHash().get(REDIS_KEY,adId);
+        }else{
+            Optional<Advertisement> optionalAdvertisement = advertisementRepository.findById(adId);
+            advertisement = optionalAdvertisement.get();  // Optional에서 엔티티 꺼내기
+        }
+//        // 조회수 증가
+//        advertisement.setViewCount(advertisement.getViewCount() + 1);
+//        advertisementRepository.save(advertisement);
+
+        assert advertisement != null;
         return getAdvertisementDto(advertisement);
     }
     private static AdvertisementResDto getAdvertisementDto(Advertisement advertisement) {

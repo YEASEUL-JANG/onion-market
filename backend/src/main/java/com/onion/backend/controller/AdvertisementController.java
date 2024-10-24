@@ -35,7 +35,7 @@ public class AdvertisementController {
     }
 
     /**
-     * 게시글 조회
+     * 광고 전체 조회
      * @param page
      * @return
      */
@@ -73,7 +73,7 @@ public class AdvertisementController {
 //    }
 
     /**
-     * 게시글 상세 조회
+     * 광고 개별 조회
      */
 
     @GetMapping("/advertisement/{adId}")

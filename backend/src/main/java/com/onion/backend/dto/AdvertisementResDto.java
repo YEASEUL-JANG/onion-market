@@ -1,5 +1,6 @@
 package com.onion.backend.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -10,7 +11,9 @@ public class AdvertisementResDto {
 
     private String title;
     private String content;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime startDate;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime endDate;
     private Integer viewCount=0;
     private Integer clickCount=0;
