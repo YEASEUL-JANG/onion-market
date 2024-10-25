@@ -7,6 +7,7 @@ import com.onion.backend.dto.ArticleReqDto;
 import com.onion.backend.dto.ArticleResDto;
 import com.onion.backend.service.AdvertisementService;
 import com.onion.backend.service.ArticleService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -28,7 +29,7 @@ public class AdvertisementController {
      * 광고 발행
      * @return
      */
-    @PostMapping("/advertisement")
+    @PostMapping("/create/ad")
     public ResponseEntity<AdvertisementResDto> writeAdvertisement(@RequestBody AdvertisementReqDto advertisementReqDto)
     {
         return ResponseEntity.ok(advertisementService.writeAd(advertisementReqDto));
@@ -77,9 +78,24 @@ public class AdvertisementController {
      */
 
     @GetMapping("/advertisement/{adId}")
-    public ResponseEntity<AdvertisementResDto> getAdvertisementById(@PathVariable(value = "adId")Long adId) throws JsonProcessingException {
-        AdvertisementResDto advertisementResDto = advertisementService.getAdvertisement(adId);
+    public ResponseEntity<AdvertisementResDto> getAdvertisementById(@PathVariable(value = "adId")Long adId,
+                                                                    HttpServletRequest request,
+                                                                    @RequestParam(value = "isTrueView", defaultValue = "false") Boolean isTrueView)  {
+        String ipAddress = request.getRemoteAddr();
+        AdvertisementResDto advertisementResDto = advertisementService.getAdvertisement(adId,ipAddress,isTrueView);
         return ResponseEntity.ok(advertisementResDto);
+    }
+
+    /**
+     * 광고 클릭
+     */
+
+    @PostMapping("/advertisement/{adId}")
+    public ResponseEntity<String> clickAdvertisement(@PathVariable(value = "adId")Long adId,
+                                                                    HttpServletRequest request)  {
+        String ipAddress = request.getRemoteAddr();
+        advertisementService.clickAdvertisement(adId,ipAddress);
+        return ResponseEntity.ok("ad click");
     }
 
 }

@@ -3,14 +3,22 @@ package com.onion.backend.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.onion.backend.dto.*;
+import com.onion.backend.entity.AdClickHistory;
+import com.onion.backend.entity.AdViewHistory;
 import com.onion.backend.entity.Advertisement;
 import com.onion.backend.entity.Article;
+import com.onion.backend.repository.AdclickHistoryRepository;
 import com.onion.backend.repository.AdvertisementRepository;
+import com.onion.backend.repository.AdviewHistoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -26,12 +34,16 @@ import java.util.stream.Collectors;
 public class AdvertisementService {
     private final AdvertisementRepository advertisementRepository;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final AdviewHistoryRepository adviewHistoryRepository;
+    private final AdclickHistoryRepository adclickHistoryRepository;
     private static final String REDIS_KEY = "ad:";
 
     @Autowired
-    public AdvertisementService(AdvertisementRepository advertisementRepository, RedisTemplate<String, Object> redisTemplate) {
+    public AdvertisementService(AdvertisementRepository advertisementRepository, RedisTemplate<String, Object> redisTemplate, AdviewHistoryRepository adviewHistoryRepository, AdclickHistoryRepository adclickHistoryRepository) {
         this.advertisementRepository = advertisementRepository;
         this.redisTemplate = redisTemplate;
+        this.adviewHistoryRepository = adviewHistoryRepository;
+        this.adclickHistoryRepository = adclickHistoryRepository;
     }
 
 
@@ -76,7 +88,8 @@ public class AdvertisementService {
 //        indexArticle(article.get());
 //    }
     @Transactional
-    public AdvertisementResDto getAdvertisement(Long adId){
+    public AdvertisementResDto getAdvertisement(Long adId, String clientIp, Boolean isTrueView){
+        insertAdViewHistory(adId,clientIp,isTrueView);
         Object object =  redisTemplate.opsForHash().get(REDIS_KEY,adId);
         Advertisement advertisement;
         if (object!=null){
@@ -85,13 +98,43 @@ public class AdvertisementService {
             Optional<Advertisement> optionalAdvertisement = advertisementRepository.findById(adId);
             advertisement = optionalAdvertisement.get();  // Optional에서 엔티티 꺼내기
         }
-//        // 조회수 증가
-//        advertisement.setViewCount(advertisement.getViewCount() + 1);
-//        advertisementRepository.save(advertisement);
 
         assert advertisement != null;
         return getAdvertisementDto(advertisement);
     }
+
+    public void clickAdvertisement(Long adId, String ipAddress) {
+        AdClickHistory adClickHistory = AdClickHistory.builder()
+                .adId(adId)
+                .clientIp(ipAddress)
+                .build();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Object principal = authentication.getPrincipal();
+        if (!principal.equals("anonymousUser")){
+            UserDetails userDetails = (UserDetails) principal;
+            adClickHistory.setUsername(userDetails.getUsername());
+        }
+        adclickHistoryRepository.save(adClickHistory);
+
+    }
+
+    private void insertAdViewHistory(Long adId, String clientIp, Boolean isTrueView){
+
+        AdViewHistory adViewHistory = AdViewHistory.builder()
+                .adId(adId)
+                .clientIp(clientIp)
+                .isTrueView(isTrueView)
+                .build();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Object principal = authentication.getPrincipal();
+        if (!principal.equals("anonymousUser")){
+            UserDetails userDetails = (UserDetails) principal;
+            adViewHistory.setUsername(userDetails.getUsername());
+        }
+        adviewHistoryRepository.save(adViewHistory);
+
+    }
+
     private static AdvertisementResDto getAdvertisementDto(Advertisement advertisement) {
         // Advertisement DTO로 변환
         return AdvertisementResDto.builder()
@@ -101,8 +144,6 @@ public class AdvertisementService {
                 .endDate(advertisement.getEndDate())
                 .build();
     }
-
-
 
 
 

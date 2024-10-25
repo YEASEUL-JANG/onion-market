@@ -31,7 +31,8 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html",
-                                "/api/users/signUp", "/api/users/login")
+                                "/api/users/signUp", "/api/users/login",
+                                "/api/advertisement/**")
                         .permitAll()  // 인증 없이 접근 가능
                         .anyRequest().authenticated()
                 ) // JWT 필터 추가

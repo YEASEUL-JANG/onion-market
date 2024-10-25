@@ -45,6 +45,8 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
 	// Redis 7
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+	//mongoDB
+	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
 
 
 
