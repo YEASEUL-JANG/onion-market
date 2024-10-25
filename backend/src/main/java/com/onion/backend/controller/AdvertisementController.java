@@ -1,10 +1,7 @@
 package com.onion.backend.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.onion.backend.dto.AdvertisementReqDto;
-import com.onion.backend.dto.AdvertisementResDto;
-import com.onion.backend.dto.ArticleReqDto;
-import com.onion.backend.dto.ArticleResDto;
+import com.onion.backend.dto.*;
 import com.onion.backend.service.AdvertisementService;
 import com.onion.backend.service.ArticleService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -96,6 +93,16 @@ public class AdvertisementController {
         String ipAddress = request.getRemoteAddr();
         advertisementService.clickAdvertisement(adId,ipAddress);
         return ResponseEntity.ok("ad click");
+    }
+
+    /**
+     * 광고 히스토리 조회
+     */
+
+    @GetMapping("/advertisement/history")
+    public ResponseEntity<List<AdViewHistoryResDto>> getAdHistory(){
+        List<AdViewHistoryResDto> adViewHistoryResDtoList = advertisementService.getAdViewHistoryGroupedByAdId();
+        return ResponseEntity.ok(adViewHistoryResDtoList);
     }
 
 }

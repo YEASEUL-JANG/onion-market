@@ -14,6 +14,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.aggregation.*;
+import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -25,9 +28,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -37,13 +40,15 @@ public class AdvertisementService {
     private final AdviewHistoryRepository adviewHistoryRepository;
     private final AdclickHistoryRepository adclickHistoryRepository;
     private static final String REDIS_KEY = "ad:";
+    private final MongoTemplate mongoTemplate;
 
     @Autowired
-    public AdvertisementService(AdvertisementRepository advertisementRepository, RedisTemplate<String, Object> redisTemplate, AdviewHistoryRepository adviewHistoryRepository, AdclickHistoryRepository adclickHistoryRepository) {
+    public AdvertisementService(AdvertisementRepository advertisementRepository, RedisTemplate<String, Object> redisTemplate, AdviewHistoryRepository adviewHistoryRepository, AdclickHistoryRepository adclickHistoryRepository, MongoTemplate mongoTemplate) {
         this.advertisementRepository = advertisementRepository;
         this.redisTemplate = redisTemplate;
         this.adviewHistoryRepository = adviewHistoryRepository;
         this.adclickHistoryRepository = adclickHistoryRepository;
+        this.mongoTemplate = mongoTemplate;
     }
 
 
@@ -68,25 +73,6 @@ public class AdvertisementService {
         Page<Advertisement> advertisementPage =  advertisementRepository.findAllByIsDeletedIsFalse(pageable);
         return advertisementPage.map(AdvertisementService::getAdvertisementDto);
     }
-//    @Transactional
-//    public ArticleResDto editArticle(Long boardId, Long articleId, ArticleReqDto dto) throws JsonProcessingException {
-//        Optional<Article> optionalArticle = articleRepository.findById(articleId);
-//
-//        // 변경감지 엔티티 필드 변경
-//        Article article = optionalArticle.get();  // Optional에서 엔티티 꺼내기
-//        article.setTitle(dto.getTitle());
-//        article.setContent(dto.getContent());
-//        //elasticSearch 반영
-//        indexArticle(article);
-//        return getAdvertisementDto(article);
-//    }
-//    @Transactional
-//    public void deleteArticle(Long boardId, Long articleId) throws JsonProcessingException {
-//        Optional<Article> article = articleRepository.findById(articleId);
-//        article.get().setIsDeleted(true);
-//        //elasticSearch 반영
-//        indexArticle(article.get());
-//    }
     @Transactional
     public AdvertisementResDto getAdvertisement(Long adId, String clientIp, Boolean isTrueView){
         insertAdViewHistory(adId,clientIp,isTrueView);
@@ -145,6 +131,66 @@ public class AdvertisementService {
                 .build();
     }
 
+    public List<AdViewHistoryResDto> countUniqueFieldByAdIdForYesterday(String fieldName, boolean fieldExists) {
+        // 어제의 시작 시간과 끝 시간
+        LocalDateTime yesterdayStart = LocalDate.now().minusDays(1).atStartOfDay();
+        LocalDateTime yesterdayEnd = LocalDateTime.now(); // 어제부터 현재 시간까지
+
+        // 필터 조건: fieldName이 존재하지 않거나(null) 특정 조건에 따라 다르게 설정
+        Criteria criteria = Criteria.where("createdDate").gte(yesterdayStart).lt(yesterdayEnd)
+                .and("adId").ne(null);
+
+        // 필드 존재 여부에 따른 조건 설정
+        if (fieldExists) {
+            criteria.and(fieldName).ne(null); // 필드가 존재하며 null이 아닌 경우
+        } else {
+            criteria.orOperator(
+                    Criteria.where(fieldName).exists(false),  // 필드가 존재하지 않는 경우
+                    Criteria.where(fieldName).is(null)        // 필드가 null인 경우
+            );
+        }
+
+        String groupingField = fieldExists ? fieldName : "clientIp";
+
+        // Aggregation 단계 정의
+        MatchOperation matchStage = Aggregation.match(criteria);
+
+        GroupOperation groupStage = Aggregation.group("adId")
+                .addToSet(groupingField).as("uniqueValues");
 
 
+        ProjectionOperation projectStage = Aggregation.project("_id")
+                .andExpression("size(uniqueValues)").as("count");
+        Aggregation aggregation = Aggregation.newAggregation(matchStage, groupStage, projectStage);
+
+
+        // Aggregation 파이프라인 생성
+        AggregationResults<Map> results = mongoTemplate.aggregate(aggregation, "adViewHistory", Map.class);
+
+        return results.getMappedResults().stream()
+                .map(result -> {
+                    Long adId = result.get("_id") != null ? Long.valueOf(result.get("_id").toString()) : null;
+                    Integer count = result.get("count") != null ? (Integer) result.get("count") : 0;
+                    return new AdViewHistoryResDto(adId, count);
+                })
+                .collect(Collectors.toList());
+    }
+    public List<AdViewHistoryResDto> getAdViewHistoryGroupedByAdId(){
+        List<AdViewHistoryResDto> usernameResult = countUniqueFieldByAdIdForYesterday("username", true);
+        List<AdViewHistoryResDto> clientIpResult = countUniqueFieldByAdIdForYesterday("username", false);
+        Map<Long, AdViewHistoryResDto> resultMap = usernameResult.stream()
+                .collect(Collectors.toMap(AdViewHistoryResDto::getAdId, dto -> dto));
+
+        for (AdViewHistoryResDto clientIpDto : clientIpResult) {
+            Long adId = clientIpDto.getAdId();
+
+            // 이미 존재하는 adId이면 count 값을 더하고, 없으면 새로 추가
+            resultMap.merge(adId, clientIpDto, (existing, newDto) -> {
+                existing.setCount(existing.getCount() + newDto.getCount());
+                return existing;
+            });
+        }
+
+        return new ArrayList<>(resultMap.values());
+    }
 }
