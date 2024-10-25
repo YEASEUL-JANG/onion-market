@@ -3,13 +3,11 @@ package com.onion.backend.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.onion.backend.dto.*;
-import com.onion.backend.entity.AdClickHistory;
-import com.onion.backend.entity.AdViewHistory;
-import com.onion.backend.entity.Advertisement;
-import com.onion.backend.entity.Article;
+import com.onion.backend.entity.*;
 import com.onion.backend.repository.AdclickHistoryRepository;
 import com.onion.backend.repository.AdvertisementRepository;
 import com.onion.backend.repository.AdviewHistoryRepository;
+import com.onion.backend.repository.AdviewStatRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -30,6 +28,7 @@ import reactor.core.publisher.Mono;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -42,13 +41,16 @@ public class AdvertisementService {
     private static final String REDIS_KEY = "ad:";
     private final MongoTemplate mongoTemplate;
 
+    private final AdviewStatRepository adviewStatRepository;
+
     @Autowired
-    public AdvertisementService(AdvertisementRepository advertisementRepository, RedisTemplate<String, Object> redisTemplate, AdviewHistoryRepository adviewHistoryRepository, AdclickHistoryRepository adclickHistoryRepository, MongoTemplate mongoTemplate) {
+    public AdvertisementService(AdvertisementRepository advertisementRepository, RedisTemplate<String, Object> redisTemplate, AdviewHistoryRepository adviewHistoryRepository, AdclickHistoryRepository adclickHistoryRepository, MongoTemplate mongoTemplate, AdviewStatRepository adviewStatRepository) {
         this.advertisementRepository = advertisementRepository;
         this.redisTemplate = redisTemplate;
         this.adviewHistoryRepository = adviewHistoryRepository;
         this.adclickHistoryRepository = adclickHistoryRepository;
         this.mongoTemplate = mongoTemplate;
+        this.adviewStatRepository = adviewStatRepository;
     }
 
 
@@ -192,5 +194,19 @@ public class AdvertisementService {
         }
 
         return new ArrayList<>(resultMap.values());
+    }
+
+    public void insertAdViewStat(List<AdViewHistoryResDto> results){
+        ArrayList<AdViewStat> arrayList = new ArrayList<>();
+        for (AdViewHistoryResDto item : results){
+            AdViewStat adViewStat = new AdViewStat();
+            adViewStat.setAdId(item.getAdId());
+            adViewStat.setCount(item.getCount());
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+            String formatteredDate = LocalDateTime.now().minusDays(1).format(formatter);
+            adViewStat.setDt(formatteredDate);
+            arrayList.add(adViewStat);
+        }
+        adviewStatRepository.saveAll(arrayList);
     }
 }

@@ -102,6 +102,7 @@ public class AdvertisementController {
     @GetMapping("/advertisement/history")
     public ResponseEntity<List<AdViewHistoryResDto>> getAdHistory(){
         List<AdViewHistoryResDto> adViewHistoryResDtoList = advertisementService.getAdViewHistoryGroupedByAdId();
+        advertisementService.insertAdViewStat(adViewHistoryResDtoList);
         return ResponseEntity.ok(adViewHistoryResDtoList);
     }
 
