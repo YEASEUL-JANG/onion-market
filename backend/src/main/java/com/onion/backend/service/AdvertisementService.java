@@ -203,8 +203,8 @@ public class AdvertisementService {
             adViewStat.setAdId(item.getAdId());
             adViewStat.setCount(item.getCount());
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-            String formatteredDate = LocalDateTime.now().minusDays(1).format(formatter);
-            adViewStat.setDt(formatteredDate);
+            String formattedDate = LocalDateTime.now().minusDays(1).format(formatter);
+            adViewStat.setDt(formattedDate);
             arrayList.add(adViewStat);
         }
         adviewStatRepository.saveAll(arrayList);

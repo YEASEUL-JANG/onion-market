@@ -43,32 +43,6 @@ public class AdvertisementController {
         return ResponseEntity.ok(advertisementResDtos);
     }
 
-    /**
-     * 게시글 수정
-     * @param boardId
-     * @param articleId
-     * @param articleReqDto
-     * @return
-     */
-//    @PutMapping("/{boardId}/articles/{articleId}")
-//    public ResponseEntity<ArticleResDto> editArticle(@PathVariable(value = "boardId") Long boardId,
-//                                                     @PathVariable(value = "articleId") Long articleId,
-//                                                     @RequestBody ArticleReqDto articleReqDto) throws JsonProcessingException {
-//        return ResponseEntity.ok(articleService.editArticle(boardId,articleId, articleReqDto));
-//    }
-
-    /**
-     * 게시글 삭제
-     * @param boardId
-     * @param articleId
-     * @return
-     */
-//    @DeleteMapping("/{boardId}/articles/{articleId}")
-//    public ResponseEntity<String> deleteArticle(@PathVariable(value = "boardId") Long boardId,
-//                                               @PathVariable(value = "articleId") Long articleId) throws JsonProcessingException {
-//        articleService.deleteArticle(boardId,articleId);
-//        return ResponseEntity.ok("success");
-//    }
 
     /**
      * 광고 개별 조회
