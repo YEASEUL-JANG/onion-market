@@ -1,6 +1,7 @@
 package com.onion.backend.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.onion.backend.config.StringListConverter;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -10,6 +11,8 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -42,4 +45,16 @@ public class User {
     // 유저 정보가 갱신될 때마다 자동으로 설정
     @LastModifiedDate //코드레벨에서만 적용
     private LocalDateTime updatedDate;
+
+    @Column(columnDefinition = "json")
+    @Convert(converter = StringListConverter.class)
+    private List<String> deviceList = new ArrayList<>();
+
+    @PrePersist
+    @PreUpdate
+    public void setDefaultValues() {
+        if (deviceList == null) {
+            deviceList = new ArrayList<>();
+        }
+    }
 }

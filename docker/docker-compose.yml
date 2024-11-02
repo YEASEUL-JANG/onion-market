@@ -78,6 +78,20 @@ services:
       - "5044:5044"
       - "9600:9600"  # Logstash monitoring API
 
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: onion-user
+      RABBITMQ_DEFAULT_PASS: onion1!
+    ports:
+      - "5672:5672"  # RabbitMQ message broker port
+      - "15672:15672"  # RabbitMQ management UI port
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+
+
+
 volumes:
   db_data:
   es-data:
@@ -85,4 +99,6 @@ volumes:
   redis-data:
     driver: local
   mongo-data:
+    driver: local
+  rabbitmq-data:
     driver: local
