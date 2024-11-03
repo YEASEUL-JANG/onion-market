@@ -1,11 +1,9 @@
 package com.onion.backend.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.onion.backend.config.StringListConverter;
+import com.onion.backend.config.DeviceListConverter;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -47,12 +45,17 @@ public class User {
     private LocalDateTime updatedDate;
 
     @Column(columnDefinition = "json")
-    @Convert(converter = StringListConverter.class)
-    private List<String> deviceList = new ArrayList<>();
+    @Convert(converter = DeviceListConverter.class)
+    private List<Device> deviceList = new ArrayList<>();
 
     @PrePersist
-    @PreUpdate
     public void setDefaultValues() {
+        if (deviceList == null) {
+            deviceList = new ArrayList<>();
+        }
+    }
+    @PostLoad
+    public void initializeDeviceList() {
         if (deviceList == null) {
             deviceList = new ArrayList<>();
         }
