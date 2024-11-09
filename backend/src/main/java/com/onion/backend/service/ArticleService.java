@@ -3,6 +3,7 @@ package com.onion.backend.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.onion.backend.dto.ArticleNotificationDto;
 import com.onion.backend.dto.ArticleReqDto;
 import com.onion.backend.dto.ArticleResDto;
 import com.onion.backend.dto.CommentResDto;
@@ -12,6 +13,7 @@ import com.onion.backend.entity.User;
 import com.onion.backend.repository.ArticleRepository;
 import com.onion.backend.repository.BoardRepository;
 import com.onion.backend.repository.UserRepository;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -37,14 +39,16 @@ public class ArticleService {
     private final ElasticsearchService elasticsearchService;
     private final ObjectMapper objectMapper;
     private final Integer pageSize = 10;
+    private final RabbitMQSender rabbitMQSender;
     @Autowired
     public ArticleService(ArticleRepository articleRepository, BoardRepository boardRepository, UserRepository userRepository,
-                          ElasticsearchService elasticsearchService, ObjectMapper objectMapper) {
+                          ElasticsearchService elasticsearchService, ObjectMapper objectMapper, RabbitMQSender rabbitMQSender) {
         this.articleRepository = articleRepository;
         this.boardRepository = boardRepository;
         this.userRepository = userRepository;
         this.elasticsearchService = elasticsearchService;
         this.objectMapper = objectMapper;
+        this.rabbitMQSender = rabbitMQSender;
     }
     @Transactional
     public ArticleResDto writeArticle(@RequestBody ArticleReqDto articleReqDto, Long boardId) throws JsonProcessingException {
@@ -64,6 +68,14 @@ public class ArticleService {
 
         //elasticsearch 저장
         this.indexArticle(article);
+
+        //rabbitmq(글작성 알림 발송)
+        ArticleNotificationDto notiDto = new ArticleNotificationDto();
+        notiDto.setArticleId(article.getId());
+        notiDto.setUserId(author.get().getId());
+        rabbitMQSender.sendMessage(notiDto);
+
+        
         return getArticleResDto(article);
     }
     @Transactional(readOnly = true)
