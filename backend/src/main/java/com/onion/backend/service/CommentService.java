@@ -1,7 +1,9 @@
 package com.onion.backend.service;
 
+import com.onion.backend.dto.ArticleNotificationDto;
 import com.onion.backend.dto.CommentReqDto;
 import com.onion.backend.dto.CommentResDto;
+import com.onion.backend.dto.WriteCommentDto;
 import com.onion.backend.entity.Article;
 import com.onion.backend.entity.Comment;
 import com.onion.backend.entity.User;
@@ -24,13 +26,15 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final UserRepository userRepository;
     private final Integer pageSize = 10;
+    private final RabbitMQSender rabbitMQSender;
 
 
     @Autowired
-    public CommentService(ArticleRepository articleRepository, CommentRepository commentRepository, UserRepository userRepository) {
+    public CommentService(ArticleRepository articleRepository, CommentRepository commentRepository, UserRepository userRepository, RabbitMQSender rabbitMQSender) {
         this.articleRepository = articleRepository;
         this.commentRepository = commentRepository;
         this.userRepository = userRepository;
+        this.rabbitMQSender = rabbitMQSender;
     }
 
     /**
@@ -57,6 +61,12 @@ public class CommentService {
                 .build();
 
         Comment savedComment = commentRepository.save(comment);
+        //rabbitmq(댓글작성 알림 발송)
+        WriteCommentDto writeCommentDto = new WriteCommentDto();
+        writeCommentDto.setCommentId(savedComment.getId());
+        rabbitMQSender.sendMessage(writeCommentDto);
+
+
         return CommentResDto.builder()
                 .id(savedComment.getId())
                 .content(savedComment.getContent())

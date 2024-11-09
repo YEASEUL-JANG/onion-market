@@ -1,6 +1,8 @@
 package com.onion.backend.service;
 
 import com.onion.backend.dto.ArticleNotificationDto;
+import com.onion.backend.dto.SendCommentNotificationDto;
+import com.onion.backend.dto.WriteCommentDto;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 
@@ -13,6 +15,14 @@ public class RabbitMQSender {
     }
     public void sendMessage(ArticleNotificationDto notiDto){
         rabbitTemplate.convertAndSend("onion-notification",notiDto.toString());
+    }
+
+    public void sendMessage(WriteCommentDto commentDto){
+        rabbitTemplate.convertAndSend("onion-notification",commentDto.toString());
+    }
+
+    public void sendMessage(SendCommentNotificationDto sendDto){
+        rabbitTemplate.convertAndSend("onion-notification",sendDto.toString());
     }
 
 }

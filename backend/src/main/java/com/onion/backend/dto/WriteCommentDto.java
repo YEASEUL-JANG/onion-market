@@ -7,7 +7,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-public class WriteCommentNotificationDto {
+public class WriteCommentDto {
     private String type = "write_comment";
     private Long commentId;
 }
