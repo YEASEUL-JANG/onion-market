@@ -1,10 +1,9 @@
 package com.onion.backend.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.onion.backend.dto.ArticleNotificationDto;
 import com.onion.backend.dto.SendCommentNotificationDto;
+import com.onion.backend.dto.WriteArticleDto;
 import com.onion.backend.dto.WriteCommentDto;
+import com.onion.backend.entity.Article;
 import com.onion.backend.entity.Comment;
 import com.onion.backend.repository.ArticleRepository;
 import com.onion.backend.repository.CommentRepository;
@@ -20,11 +19,13 @@ import java.util.Optional;
 public class RabbitMQReceiver {
     private final CommentRepository commentRepository;
     private final ArticleRepository articleRepository;
+    private final UserNotificationHistoryService userNotificationHistoryService;
     private final RabbitMQSender rabbitMQSender;
     @Autowired
-    public RabbitMQReceiver(CommentRepository commentRepository, ArticleRepository articleRepository, RabbitMQSender rabbitMQSender) {
+    public RabbitMQReceiver(CommentRepository commentRepository, ArticleRepository articleRepository, UserNotificationHistoryService userNotificationHistoryService, RabbitMQSender rabbitMQSender) {
         this.commentRepository = commentRepository;
         this.articleRepository = articleRepository;
+        this.userNotificationHistoryService = userNotificationHistoryService;
         this.rabbitMQSender = rabbitMQSender;
     }
 
@@ -34,8 +35,38 @@ public class RabbitMQReceiver {
             this.sendCommentNotification(message);
             return;
         }
+        if(message.contains(WriteArticleDto.class.getSimpleName())){
+            this.sendArticleNotification(message);
+            return;
+        }
+
 
         System.out.println("Received Message : "+message);
+    }
+
+    private void sendArticleNotification(String message) {
+        //데이터 역직렬화
+        message = message.replace("WriteArticle(", "").replace(")", "");
+        String[] parts = message.split(", ");
+        String type = null;
+        Long articleId = null;
+        Long userId = null;
+        for (String part : parts) {
+            String[] keyValue = part.split("=");
+            String key = keyValue[0].trim();
+            String value = keyValue[1].trim();
+            if (key.equals("type")) {
+                type = value;
+            } else if (key.equals("articleId")) {
+                articleId = Long.parseLong(value);
+            }else if (key.equals("userId")) {
+                userId = Long.parseLong(value);
+            }
+        }
+        Optional<Article> article = articleRepository.findById(articleId);
+        if(article.isPresent()){
+            userNotificationHistoryService.insertArticleNotification(article.get(),userId);
+        }
     }
 
     private void sendCommentNotification(String message) {
@@ -78,6 +109,7 @@ public class RabbitMQReceiver {
             for(Long userId: userSet){
                 sendCommentNotificationDto.setUserId(userId);
                 rabbitMQSender.sendMessage(sendCommentNotificationDto);
-                }
+                userNotificationHistoryService.insertCommentNotification(comment,userId);
+            }
     }
 }

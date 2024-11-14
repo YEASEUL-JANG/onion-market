@@ -1,6 +1,5 @@
 package com.onion.backend.service;
 
-import com.onion.backend.dto.ArticleNotificationDto;
 import com.onion.backend.dto.CommentReqDto;
 import com.onion.backend.dto.CommentResDto;
 import com.onion.backend.dto.WriteCommentDto;

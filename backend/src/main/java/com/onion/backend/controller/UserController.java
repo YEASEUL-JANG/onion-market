@@ -8,6 +8,7 @@ import com.onion.backend.entity.User;
 import com.onion.backend.jwt.JwtUtil;
 import com.onion.backend.service.CustomUserDetailsService;
 import com.onion.backend.service.JwtBlacklistService;
+import com.onion.backend.service.UserNotificationHistoryService;
 import com.onion.backend.service.UserService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -32,16 +33,18 @@ public class UserController {
     private final AuthenticationManager authenticationManager;
     private final CustomUserDetailsService userDetailsService;
     private final JwtUtil jwtUtil;
+    private final UserNotificationHistoryService userNotificationHistoryService;
 
-    @Autowired
-    private JwtBlacklistService jwtBlacklistService;
+    private final JwtBlacklistService jwtBlacklistService;
     @Autowired
     public UserController(UserService userService, AuthenticationManager authenticationManager,
-                          CustomUserDetailsService userDetailsService, JwtUtil jwtUtil) {
+                          CustomUserDetailsService userDetailsService, JwtUtil jwtUtil, UserNotificationHistoryService userNotificationHistoryService, JwtBlacklistService jwtBlacklistService) {
         this.userService = userService;
         this.authenticationManager = authenticationManager;
         this.userDetailsService = userDetailsService;
         this.jwtUtil = jwtUtil;
+        this.userNotificationHistoryService = userNotificationHistoryService;
+        this.jwtBlacklistService = jwtBlacklistService;
     }
 
 
@@ -133,6 +136,12 @@ public class UserController {
         if (!isValid){
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,"토큰이 유효하지 않습니다.");
         }
+    }
+
+    @PostMapping("/history")
+    @ResponseStatus(HttpStatus.OK)
+    public void readHistory(@RequestParam(value = "historyId") String historyId){
+        userNotificationHistoryService.readNotification(historyId);
     }
 
 }

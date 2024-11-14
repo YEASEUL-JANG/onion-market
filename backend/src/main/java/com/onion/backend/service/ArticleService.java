@@ -3,7 +3,7 @@ package com.onion.backend.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.onion.backend.dto.ArticleNotificationDto;
+import com.onion.backend.dto.WriteArticleDto;
 import com.onion.backend.dto.ArticleReqDto;
 import com.onion.backend.dto.ArticleResDto;
 import com.onion.backend.dto.CommentResDto;
@@ -13,7 +13,6 @@ import com.onion.backend.entity.User;
 import com.onion.backend.repository.ArticleRepository;
 import com.onion.backend.repository.BoardRepository;
 import com.onion.backend.repository.UserRepository;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -70,7 +69,7 @@ public class ArticleService {
         this.indexArticle(article);
 
         //rabbitmq(글작성 알림 발송)
-        ArticleNotificationDto notiDto = new ArticleNotificationDto();
+        WriteArticleDto notiDto = new WriteArticleDto();
         notiDto.setArticleId(article.getId());
         notiDto.setUserId(author.get().getId());
         rabbitMQSender.sendMessage(notiDto);
