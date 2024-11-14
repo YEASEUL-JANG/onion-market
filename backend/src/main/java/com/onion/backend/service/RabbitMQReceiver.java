@@ -28,20 +28,26 @@ public class RabbitMQReceiver {
         this.userNotificationHistoryService = userNotificationHistoryService;
         this.rabbitMQSender = rabbitMQSender;
     }
+    @RabbitListener(queues = "send_notification.email")
+    public void emailReceive(String message){
+        System.out.println("Received Message(email) : "+message);
+    }
 
+    @RabbitListener(queues = "send_notification.sms")
+    public void smsReceive(String message){
+        System.out.println("Received Message(sms) : "+message);
+    }
     @RabbitListener(queues = "onion-notification")
-    public void receiveMessage(String message){
-        if(message.contains(WriteCommentDto.class.getSimpleName())){
+    public void receiveMessage(String message) {
+        if (message.contains(WriteCommentDto.class.getSimpleName())) {
             this.sendCommentNotification(message);
             return;
         }
-        if(message.contains(WriteArticleDto.class.getSimpleName())){
+        if (message.contains(WriteArticleDto.class.getSimpleName())) {
             this.sendArticleNotification(message);
             return;
         }
-
-
-        System.out.println("Received Message : "+message);
+        System.out.println("Received Message(onion) : "+message);
     }
 
     private void sendArticleNotification(String message) {

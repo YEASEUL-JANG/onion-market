@@ -22,7 +22,7 @@ public class RabbitMQSender {
     }
 
     public void sendMessage(SendCommentNotificationDto sendDto){
-        rabbitTemplate.convertAndSend("onion-notification",sendDto.toString());
+        rabbitTemplate.convertAndSend("send_notification_exchange","",sendDto.toString());
     }
 
 }
