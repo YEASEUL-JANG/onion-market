@@ -1,26 +1,32 @@
 package com.onion.backend.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.onion.backend.config.BatchConfig;
 import com.onion.backend.dto.ArticleReqDto;
 import com.onion.backend.dto.ArticleResDto;
+import com.onion.backend.dto.HotArticleDto;
 import com.onion.backend.service.ArticleService;
 import org.springframework.data.domain.Page;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/boards")
 public class ArticleController {
     private final ArticleService articleService;
     private final AuthenticationManager authenticationManager;
+    private final RedisTemplate<String,Object> redisTemplate;
 
 
-    public ArticleController(ArticleService articleService, AuthenticationManager authenticationManager) {
+    public ArticleController(ArticleService articleService, AuthenticationManager authenticationManager, RedisTemplate<String, Object> redisTemplate) {
         this.articleService = articleService;
         this.authenticationManager = authenticationManager;
+        this.redisTemplate = redisTemplate;
     }
     /**
      * 게시글 발행
@@ -81,6 +87,21 @@ public class ArticleController {
     @GetMapping("/{boardId}/articles/{articleId}")
     public ResponseEntity<ArticleResDto> getArticleWithComment(@PathVariable(value = "boardId")Long boardId,
                                                          @PathVariable(value = "articleId")Long articleId) throws JsonProcessingException {
+        //TODO : redis cash 에서 먼저 조회
+        Object object =  redisTemplate.opsForHash().get(BatchConfig.YEST_REDIS_KEY+articleId,articleId);
+        if(object!=null){
+            HotArticleDto hotArticleDto = (HotArticleDto)object;
+            ArticleResDto articleResDto = ArticleResDto.builder()
+                    .id(hotArticleDto.getId())
+                    .title(hotArticleDto.getTitle())
+                    .content(hotArticleDto.getContent())
+                    .authorName(hotArticleDto.getAuthorName())
+                    .createdDate(String.valueOf(hotArticleDto.getCreatedDate()))
+                    .viewCount(hotArticleDto.getViewCount())
+                    .build();
+            return ResponseEntity.ok(articleResDto);
+        }
+        //redis 에 없을 경우 DB조회
         ArticleResDto articleResDto = articleService.getArticleWithComments(boardId,articleId);
         return ResponseEntity.ok(articleResDto);
     }

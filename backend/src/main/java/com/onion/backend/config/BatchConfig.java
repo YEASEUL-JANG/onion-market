@@ -40,8 +40,8 @@ public class BatchConfig {
     private final JobLauncher jobLauncher;
     private final ArticleRepository articleRepository;
     private final RedisTemplate<String, Object> redisTemplate;
-    private static final String YEST_REDIS_KEY = "yest-hot-article:";
-    private static final String WEEK_REDIS_KEY = "week-hot-article:";
+    public static final String YEST_REDIS_KEY = "yest-hot-article:";
+    public static final String WEEK_REDIS_KEY = "week-hot-article:";
 
 
     public BatchConfig(JobRepository jobRepository, PlatformTransactionManager transactionManager,
@@ -160,7 +160,7 @@ public class BatchConfig {
                 .build();
     }
 
-    private static HotArticleDto getHotArticleDto(Article article) {
+    public static HotArticleDto getHotArticleDto(Article article) {
         HotArticleDto hotArticleDto = new HotArticleDto();
         hotArticleDto.setId(article.getId());
         hotArticleDto.setTitle(article.getTitle());
