@@ -18,8 +18,9 @@ public class UserNotificationHistory {
     private String title;
     private String content;
     private Long userId;
+    private Long noticeId;
     private Boolean isRead = false;
     private LocalDateTime createdDate = LocalDateTime.now();
-    private LocalDateTime updateDate = LocalDateTime.now();
+    private LocalDateTime updatedDate = LocalDateTime.now();
 
 }

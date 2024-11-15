@@ -62,7 +62,7 @@ public class UserNotificationHistoryService {
             return;
         }
         history.get().setIsRead(true);
-        history.get().setUpdateDate(LocalDateTime.now());
+        history.get().setUpdatedDate(LocalDateTime.now());
         userNotificationHistoryRepository.save(history.get());
     }
 }
