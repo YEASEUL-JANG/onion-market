@@ -5,6 +5,7 @@ import com.onion.backend.dto.LoginResDto;
 import com.onion.backend.dto.SignUpReq;
 import com.onion.backend.dto.TokenValidationRequest;
 import com.onion.backend.entity.User;
+import com.onion.backend.entity.UserNotificationHistory;
 import com.onion.backend.jwt.JwtUtil;
 import com.onion.backend.service.CustomUserDetailsService;
 import com.onion.backend.service.JwtBlacklistService;
@@ -25,6 +26,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/users")
@@ -142,6 +144,11 @@ public class UserController {
     @ResponseStatus(HttpStatus.OK)
     public void readHistory(@RequestParam(value = "historyId") String historyId){
         userNotificationHistoryService.readNotification(historyId);
+    }
+
+    @GetMapping("/history")
+    public ResponseEntity<List<UserNotificationHistory>> getHistoryList() {
+        return ResponseEntity.ok(userNotificationHistoryService.getNotificationList());
     }
 
 }
