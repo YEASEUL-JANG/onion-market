@@ -40,7 +40,8 @@ public class BatchConfig {
     private final JobLauncher jobLauncher;
     private final ArticleRepository articleRepository;
     private final RedisTemplate<String, Object> redisTemplate;
-    private static final String REDIS_KEY = "hot-article:";
+    private static final String YEST_REDIS_KEY = "yest-hot-article:";
+    private static final String WEEK_REDIS_KEY = "week-hot-article:";
 
 
     public BatchConfig(JobRepository jobRepository, PlatformTransactionManager transactionManager,
@@ -52,6 +53,10 @@ public class BatchConfig {
         this.articleRepository = articleRepository;
         this.redisTemplate = redisTemplate;
     }
+
+    /**
+     *  광고클릭 집계
+     */
     // Job 정의
     @Bean
     public Job adViewStatJob() {
@@ -83,6 +88,10 @@ public class BatchConfig {
         jobLauncher.run(adViewStatJob(), jobParameters);
     }
 
+    /**
+     * 어제 인기글
+     */
+
     // Job 정의
     @Bean
     public Job pickHotArticleJob() {
@@ -101,15 +110,8 @@ public class BatchConfig {
                     LocalDateTime endDate = LocalDateTime.of(LocalDate.now(), LocalTime.MIN);
                     Article article = articleRepository.findHotArticle(startDate,endDate);
                     if(article!=null){
-                        HotArticleDto hotArticleDto = new HotArticleDto();
-                        hotArticleDto.setId(article.getId());
-                        hotArticleDto.setTitle(article.getTitle());
-                        hotArticleDto.setContent(article.getContent());
-                        hotArticleDto.setAuthorName(article.getAuthorName());
-                        hotArticleDto.setCreatedDate(article.getCreatedDate());
-                        hotArticleDto.setUpdatedDate(article.getUpdatedDate());
-                        hotArticleDto.setViewCount(article.getViewCount());
-                        redisTemplate.opsForHash().put(REDIS_KEY+article.getId(),article.getId(), hotArticleDto);
+                        HotArticleDto hotArticleDto = getHotArticleDto(article);
+                        redisTemplate.opsForHash().put(YEST_REDIS_KEY+article.getId(),article.getId(), hotArticleDto);
 
                     }
 
@@ -125,6 +127,58 @@ public class BatchConfig {
                 .addLong("time", System.currentTimeMillis()) // JobParameters에 고유 ID 추가
                 .toJobParameters();
         jobLauncher.run(pickHotArticleJob(), jobParameters);
+    }
+
+    /**
+     * 이번주 인기글
+     */
+
+    // Job 정의
+    @Bean
+    public Job pickWeekHotArticleJob() {
+        return new JobBuilder("pickWeekHotArticleJob", jobRepository)
+                .incrementer(new RunIdIncrementer())
+                .start(pickWeekHotArticleStep())
+                .build();
+    }
+
+    // Step 정의
+    @Bean
+    public Step pickWeekHotArticleStep() {
+        return new StepBuilder("pickWeekHotArticleStep", jobRepository)
+                .tasklet((contribution, chunkContext) -> {
+                    LocalDateTime startDate = LocalDateTime.of(LocalDate.now().minusDays(8), LocalTime.MIN);
+                    LocalDateTime endDate = LocalDateTime.of(LocalDate.now().minusDays(1), LocalTime.MIN);
+                    Article article = articleRepository.findHotArticle(startDate,endDate);
+                    if(article!=null){
+                        HotArticleDto hotArticleDto = getHotArticleDto(article);
+                        redisTemplate.opsForHash().put(WEEK_REDIS_KEY+article.getId(),article.getId(), hotArticleDto);
+                    }
+
+                    return RepeatStatus.FINISHED;
+                }, transactionManager)
+                .build();
+    }
+
+    private static HotArticleDto getHotArticleDto(Article article) {
+        HotArticleDto hotArticleDto = new HotArticleDto();
+        hotArticleDto.setId(article.getId());
+        hotArticleDto.setTitle(article.getTitle());
+        hotArticleDto.setContent(article.getContent());
+        hotArticleDto.setAuthorName(article.getAuthorName());
+        hotArticleDto.setCreatedDate(article.getCreatedDate());
+        hotArticleDto.setUpdatedDate(article.getUpdatedDate());
+        hotArticleDto.setViewCount(article.getViewCount());
+        return hotArticleDto;
+    }
+
+    // 매일 자정에 배치 작업 실행
+    @Scheduled(cron = "0 0 0 * * ?")
+    public void performPickWeekHotArticleJob() throws Exception {
+        JobParameters jobParameters = new JobParametersBuilder()
+                .addLong("time", System.currentTimeMillis()) // JobParameters에 고유 ID 추가
+                .toJobParameters();
+        jobLauncher.run(pickWeekHotArticleJob(), jobParameters);
     }
 
 }
