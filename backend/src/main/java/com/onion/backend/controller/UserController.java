@@ -86,7 +86,7 @@ public class UserController {
             // 쿠키를 응답에 추가
             response.addCookie(jwtCookie);
 
-            return ResponseEntity.ok("login success");
+            return ResponseEntity.ok(jwtToken);
         } catch (BadCredentialsException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username or password");
         }

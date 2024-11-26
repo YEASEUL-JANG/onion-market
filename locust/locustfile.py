@@ -30,6 +30,7 @@ class CommonUser(HttpUser):
             "password": password
         })
         token = res.text
+        print(f"Generated Token: {token}")
         headers["Authorization"] = "Bearer " + token
 
         # 게시글(+광고) 리스트 1회 조회 후 게시글 1회 작성(광고도 하나 보고 클릭)         -> MySQL
