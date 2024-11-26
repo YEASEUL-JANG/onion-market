@@ -38,10 +38,6 @@ public class UserService {
             throw new IllegalArgumentException("유저가 이미 존재합니다.");
         }
 
-        if (userRepository.findByEmail(signUpUser.getEmail()).isPresent()) {
-            throw new IllegalArgumentException("이메일이 이미 존재합니다.");
-        }
-
         // 새로운 유저 생성
         User user = new User();
         user.setUsername(signUpUser.getUsername());
