@@ -8,8 +8,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface AdvertisementRepository extends JpaRepository<Advertisement, Long> {
 
-    Page<Advertisement> findAllByIsDeletedIsFalse(Pageable pageable);
+    List<Advertisement> findAllByIsDeletedIsFalse();
 }

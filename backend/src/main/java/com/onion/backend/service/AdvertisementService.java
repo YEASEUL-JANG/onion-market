@@ -70,10 +70,9 @@ public class AdvertisementService {
         return getAdvertisementDto(advertisement);
     }
     @Transactional(readOnly = true)
-    public Page<AdvertisementResDto> getAdvertisementList(int pageNumber){
-        Pageable pageable = PageRequest.of(pageNumber - 1, 10); // 페이지 번호는 0부터 시작
-        Page<Advertisement> advertisementPage =  advertisementRepository.findAllByIsDeletedIsFalse(pageable);
-        return advertisementPage.map(AdvertisementService::getAdvertisementDto);
+    public List<AdvertisementResDto> getAdvertisementList(){
+        List<Advertisement> advertisementPage =  advertisementRepository.findAllByIsDeletedIsFalse();
+        return advertisementPage.stream().map(AdvertisementService::getAdvertisementDto).toList();
     }
     @Transactional
     public AdvertisementResDto getAdvertisement(Long adId, String clientIp, Boolean isTrueView){
@@ -126,6 +125,7 @@ public class AdvertisementService {
     private static AdvertisementResDto getAdvertisementDto(Advertisement advertisement) {
         // Advertisement DTO로 변환
         return AdvertisementResDto.builder()
+                .id(advertisement.getId())
                 .title(advertisement.getTitle())
                 .content(advertisement.getContent())
                 .startDate(advertisement.getStartDate())

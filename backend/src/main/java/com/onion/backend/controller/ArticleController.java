@@ -39,6 +39,16 @@ public class ArticleController {
             throws JsonProcessingException {
         return ResponseEntity.ok(articleService.writeArticle(articleReqDto, boardId));
     }
+    /**
+     * 전체게시글 조회(페이징 x)
+     * @param boardId
+     * @return
+     */
+    @GetMapping("/{boardId}/all-articles")
+    public ResponseEntity<List<ArticleResDto>> getAllArticlesByBoard(@PathVariable(value = "boardId") Long boardId) {
+        List<ArticleResDto> articleDtos = articleService.getAllArticlesByBoardId(boardId);
+        return ResponseEntity.ok(articleDtos);
+    }
 
     /**
      * 게시글 조회

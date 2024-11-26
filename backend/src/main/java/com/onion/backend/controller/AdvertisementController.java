@@ -34,12 +34,11 @@ public class AdvertisementController {
 
     /**
      * 광고 전체 조회
-     * @param page
      * @return
      */
     @GetMapping("/advertisement/all")
-    public ResponseEntity<Page<AdvertisementResDto>> getAdvertisementList(@RequestParam(value = "page" ,defaultValue = "1") int page) {
-        Page<AdvertisementResDto> advertisementResDtos = advertisementService.getAdvertisementList(page);
+    public ResponseEntity<List<AdvertisementResDto>> getAdvertisementList() {
+        List<AdvertisementResDto> advertisementResDtos = advertisementService.getAdvertisementList();
         return ResponseEntity.ok(advertisementResDtos);
     }
 

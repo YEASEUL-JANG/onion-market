@@ -84,6 +84,13 @@ public class ArticleService {
 
         return articlePage.map(ArticleService::getArticleResDto);
     }
+
+    @Transactional(readOnly = true)
+    public List<ArticleResDto> getAllArticlesByBoardId(Long boardId){
+        List<Article> articleList =  articleRepository.findAllByBoardIdAndIsDeletedFalseOrderByCreatedDateDesc(boardId);
+
+        return articleList.stream().map(ArticleService::getArticleResDto).collect(Collectors.toList());
+    }
     @Transactional
     public ArticleResDto editArticle(Long boardId, Long articleId, ArticleReqDto dto) throws JsonProcessingException {
         Optional<Article> optionalArticle = articleRepository.findById(articleId);

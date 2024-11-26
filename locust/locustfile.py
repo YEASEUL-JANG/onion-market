@@ -34,7 +34,7 @@ class CommonUser(HttpUser):
 
         # 게시글(+광고) 리스트 1회 조회 후 게시글 1회 작성(광고도 하나 보고 클릭)         -> MySQL
         board_id = 1
-        res = self.client.get(f"/api/boards/{board_id}/articles", headers=headers)
+        res = self.client.get(f"/api/boards/{board_id}/all-articles", headers=headers)
         articles = res.json()
         res = self.client.get(f"/api/advertisement/all", headers=headers)
         ads = res.json()
@@ -73,9 +73,8 @@ class CommonUser(HttpUser):
 
         # 게시글 검색(search) 1회 후 인기글 10회 조회     -> ElasticSearch / Redis
         keyword = generate_text(10)
-        self.client.post(f"/api/boards/{board_id}/articles/search", headers=headers, json={
-            "keyword": keyword
-        })
+        self.client.post(f"/api/boards/{board_id}/articles/search?keyword={keyword}", headers=headers)
+
         # 인기글 설정 필요
         # self.client.get(f"/api/boards/{board_id}/articles/1", headers=headers)
 

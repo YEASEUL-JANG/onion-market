@@ -21,12 +21,22 @@ public class NoticeController {
         this.noticeService = noticeService;
     }
 
+    /**
+     * 공지사항 추가
+     * @param dto
+     * @return
+     */
     @PostMapping("")
     public ResponseEntity<Notice> addNotice(@RequestBody WriteNoticeDto dto){
         return ResponseEntity.ok(noticeService.writeNotice(dto));
     }
 
-    @PostMapping("/{noticeId}")
+    /**
+     *  공지사항 조회
+     * @param noticeId
+     * @return
+     */
+    @GetMapping("/{noticeId}")
     public ResponseEntity<Notice> getNotice(@PathVariable(value = "noticeId") Long noticeId){
         return ResponseEntity.ok(noticeService.getNotice(noticeId));
     }
