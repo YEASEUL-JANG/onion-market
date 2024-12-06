@@ -51,9 +51,13 @@ class CommonUser(HttpUser):
             "title": generate_text(100),
             "content": generate_text(200)
         })
-        # 게시글 중에 랜덤하게 하나 댓글 달기
+
         if articles:
             article_id = random.choice(articles)["id"]
+            /{boardId}/articles/{articleId}
+            # 게시글 조회
+            self.client.get(f"/api/boards/{board_id}/articles/{article_id}", headers=headers)
+            # 게시글 중에 랜덤하게 하나 댓글 달기
             self.client.post(f"/api/boards/{board_id}/articles/{article_id}/comment", headers=headers, json={
                 "content": generate_text(200)
             })
