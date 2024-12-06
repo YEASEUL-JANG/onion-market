@@ -54,7 +54,6 @@ class CommonUser(HttpUser):
 
         if articles:
             article_id = random.choice(articles)["id"]
-            /{boardId}/articles/{articleId}
             # 게시글 조회
             self.client.get(f"/api/boards/{board_id}/articles/{article_id}", headers=headers)
             # 게시글 중에 랜덤하게 하나 댓글 달기
