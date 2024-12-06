@@ -66,11 +66,11 @@ class CommonUser(HttpUser):
                 # 모든 알림 읽음 처리
                 if not history["isRead"]:
                     history_id = history["id"]
-                    notice_id = history["noticeId"]
-                    if notice_id == 0:
-                        self.client.post(f"/api/users/history?historyId={history_id}", headers=headers)
-                    else:
+                    notice_id = history.get("noticeId")
+                    if notice_id and notice_id != 0:  # noticeId가 유효한 경우에만 요청
                         self.client.get(f"/api/notice/{notice_id}", headers=headers)
+                    else:
+                        self.client.post(f"/api/users/history?historyId={history_id}", headers=headers)
 
         # 게시글 검색(search) 1회 후 인기글 10회 조회     -> ElasticSearch / Redis
         keyword = generate_text(10)
