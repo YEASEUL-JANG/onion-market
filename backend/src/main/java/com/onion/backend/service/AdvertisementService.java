@@ -63,30 +63,39 @@ public class AdvertisementService {
                 .endDate(advertisementReqDto.getEndDate())
                 .build();
         advertisementRepository.save(advertisement);
-
-        //redis 저장
         redisTemplate.opsForHash().put(REDIS_KEY+advertisement.getId(),advertisement.getId(), advertisement);
 
         return getAdvertisementDto(advertisement);
     }
     @Transactional(readOnly = true)
     public List<AdvertisementResDto> getAdvertisementList(){
-        List<Advertisement> advertisementPage =  advertisementRepository.findAllByIsDeletedIsFalse();
-        return advertisementPage.stream().map(AdvertisementService::getAdvertisementDto).toList();
+        //redis 에서 먼저 조회
+        List<Object> redisData = redisTemplate.opsForHash().values(REDIS_KEY);
+
+        List<Advertisement> advertisementList = redisData.stream()
+                .map(object -> (Advertisement) object)
+                .toList();
+        // Redis에 없으면 DB에서 조회하고 캐싱
+        if (advertisementList.isEmpty()) {
+            advertisementList = advertisementRepository.findAllByIsDeletedIsFalse();
+            //redis 에 다시 캐싱
+            advertisementList.forEach(ad -> redisTemplate.opsForHash().put(REDIS_KEY, ad.getId(), ad));
+        }
+        return advertisementList.stream().map(AdvertisementService::getAdvertisementDto).toList();
     }
-    @Transactional
+    @Transactional(readOnly = true)
     public AdvertisementResDto getAdvertisement(Long adId, String clientIp, Boolean isTrueView){
         insertAdViewHistory(adId,clientIp,isTrueView);
-        Object object =  redisTemplate.opsForHash().get(REDIS_KEY,adId);
-        Advertisement advertisement;
-        if (object!=null){
-            advertisement = (Advertisement) redisTemplate.opsForHash().get(REDIS_KEY,adId);
-        }else{
-            Optional<Advertisement> optionalAdvertisement = advertisementRepository.findById(adId);
-            advertisement = optionalAdvertisement.get();  // Optional에서 엔티티 꺼내기
-        }
+        // Redis에서 조회
+        Advertisement advertisement = (Advertisement) redisTemplate.opsForHash().get(REDIS_KEY, adId);
 
-        assert advertisement != null;
+        // Redis에 없으면 DB에서 조회하고 Redis에 캐싱
+        if (advertisement == null) {
+            advertisement = advertisementRepository.findById(adId)
+                    .orElseThrow(() -> new IllegalArgumentException("Advertisement not found for ID: " + adId));
+            // Redis에 저장
+            redisTemplate.opsForHash().put(REDIS_KEY, adId, advertisement);
+        }
         return getAdvertisementDto(advertisement);
     }
 
