@@ -12,7 +12,7 @@ def generate_text(length=8):
 
 
 class CommonUser(HttpUser):
-    host = "http://3.38.178.82:8080"
+    host = "http://52.78.109.42:8080"
     wait_time = constant(5)
 
     @task

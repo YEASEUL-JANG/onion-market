@@ -21,6 +21,6 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
 
     @Query("SELECT a FROM Article a WHERE a.createdDate >= :startDate AND a.createdDate < :endDate ORDER BY a.viewCount DESC LIMIT 1")
     Article findHotArticle(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
-    List<Article> findAllByBoardIdAndIsDeletedFalseOrderByCreatedDateDesc(Long boardId);
+    List<Article> findTop15ByBoardIdAndIsDeletedFalseOrderByCreatedDateDesc(Long boardId);
 
 }

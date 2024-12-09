@@ -87,7 +87,7 @@ public class ArticleService {
 
     @Transactional(readOnly = true)
     public List<ArticleResDto> getAllArticlesByBoardId(Long boardId){
-        List<Article> articleList =  articleRepository.findAllByBoardIdAndIsDeletedFalseOrderByCreatedDateDesc(boardId);
+        List<Article> articleList =  articleRepository.findTop15ByBoardIdAndIsDeletedFalseOrderByCreatedDateDesc(boardId);
 
         return articleList.stream().map(ArticleService::getArticleResDto).collect(Collectors.toList());
     }
