@@ -63,7 +63,7 @@ public class AdvertisementService {
                 .endDate(advertisementReqDto.getEndDate())
                 .build();
         advertisementRepository.save(advertisement);
-        redisTemplate.opsForHash().put(REDIS_KEY+advertisement.getId(),advertisement.getId(), advertisement);
+        redisTemplate.opsForHash().put(REDIS_KEY,advertisement.getId(), advertisement);
 
         return getAdvertisementDto(advertisement);
     }
