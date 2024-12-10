@@ -1,6 +1,9 @@
 import random
 import string
-
+import gevent
+from gevent import monkey
+monkey.patch_all()
+import requests
 from locust import HttpUser, task, constant
 
 
@@ -9,6 +12,21 @@ def generate_text(length=8):
     characters = string.ascii_lowercase + string.digits
     username = ''.join(random.choice(characters) for _ in range(length))
     return username
+
+def fetch_notice(client, notice_id, headers):
+    client.get(f"/api/notice/{notice_id}", headers=headers)
+
+def mark_history_read(client, history_id, headers):
+    client.post(f"/api/users/history?historyId={history_id}", headers=headers)
+
+def process_history(client, history, headers):
+    if not history["isRead"]:
+        history_id = history["id"]
+        notice_id = history.get("noticeId")
+        if notice_id and notice_id != 0:
+            fetch_notice(client, notice_id, headers)
+        else:
+            mark_history_read(client, history_id, headers)
 
 
 class CommonUser(HttpUser):
@@ -33,7 +51,7 @@ class CommonUser(HttpUser):
         print(f"Generated Token: {token}")
         headers["Authorization"] = "Bearer " + token
 
-        # 게시글(+광고) 리스트 1회 조회 후 게시글 1회 작성(광고도 하나 보고 클릭)         -> MySQL
+        # 게시글(+광고) 리스트 1회 조회 후 게시글 1회 작성(광고도 하나 보고 클릭)
         board_id = 1
         res = self.client.get(f"/api/boards/{board_id}/all-articles", headers=headers)
         articles = res.json()
@@ -65,15 +83,18 @@ class CommonUser(HttpUser):
         res = self.client.get(f"/api/users/history", headers=headers)
         history_list = res.json()
         if history_list:
-            for history in history_list:
-                # 모든 알림 읽음 처리
-                if not history["isRead"]:
-                    history_id = history["id"]
-                    notice_id = history.get("noticeId")
-                    if notice_id and notice_id != 0:  # noticeId가 유효한 경우에만 요청
-                        self.client.get(f"/api/notice/{notice_id}", headers=headers)
-                    else:
-                        self.client.post(f"/api/users/history?historyId={history_id}", headers=headers)
+            jobs = [gevent.spawn(process_history, self.client, history, headers) for history in history_list]
+            gevent.joinall(jobs)
+
+#             for history in history_list:
+#                 # 모든 알림 읽음 처리
+#                 if not history["isRead"]:
+#                     history_id = history["id"]
+#                     notice_id = history.get("noticeId")
+#                     if notice_id and notice_id != 0:  # noticeId가 유효한 경우에만 요청
+#                         self.client.get(f"/api/notice/{notice_id}", headers=headers)
+#                     else:
+#                         self.client.post(f"/api/users/history?historyId={history_id}", headers=headers)
 
         # 게시글 검색(search) 1회 후 인기글 10회 조회     -> ElasticSearch / Redis
         keyword = generate_text(10)

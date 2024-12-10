@@ -60,12 +60,16 @@ public class UserService {
     public List<Device> getDevices(){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetails userDetails  =(UserDetails)  authentication.getPrincipal();
-        Optional<User> user = userRepository.findByUsername(userDetails.getUsername());
-        if (user.isPresent()){
-            return user.get().getDeviceList();
-        }else{
-            return new ArrayList<>();
-        }
+//        Optional<User> user = userRepository.findByUsername(userDetails.getUsername());
+//        if (user.isPresent()){
+//            return user.get().getDeviceList();
+//        }else{
+//            return new ArrayList<>();
+//        }
+        User user = userRepository.findByUsername(userDetails.getUsername()).orElseThrow(()
+                -> new IllegalArgumentException("유저가 존재하지 않습니다."));
+        return user.getDeviceList();
+
     }
 
     public Device addDevice(WriteDeviceDto writeDeviceDto) {

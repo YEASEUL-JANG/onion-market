@@ -28,6 +28,7 @@ import reactor.core.publisher.Mono;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Service
@@ -113,14 +114,21 @@ public class ArticleService {
     @Transactional
     public ArticleResDto getArticleWithComments(Long boardId, Long articleId) throws JsonProcessingException {
         Optional<Article> optionalArticle = articleRepository.findById(articleId);
-        Article article = optionalArticle.get();  // Optional에서 엔티티 꺼내기
+        Article article = optionalArticle.orElseThrow(() -> new IllegalArgumentException("Article not found"));
         // 조회수 증가
-        article.setViewCount(article.getViewCount() + 1);
-        articleRepository.save(article);
-        //elasticSearch 반영
-        indexArticle(article);
+        CompletableFuture.runAsync(() -> incrementViewCount(article));
+
+        // 4. Elasticsearch에 인덱싱
+        elasticsearchService.indexArticleDocument(String.valueOf(articleId), article)
+                .subscribe(); // 비동기로 Elasticsearch에 저장
+
         // Comment 리스트를 DTO로 변환
         return getArticleResDto(article);
+    }
+
+    private void incrementViewCount(Article article) {
+        article.setViewCount(article.getViewCount() + 1);
+        articleRepository.save(article); // 비동기로 처리
     }
     private static ArticleResDto getArticleResDto(Article article) {
         List<CommentResDto> commentResDtoList = article.getComments().stream()
@@ -140,8 +148,7 @@ public class ArticleService {
     }
 
     public void indexArticle(Article article) throws JsonProcessingException{
-        String articleJson = objectMapper.writeValueAsString(article);
-        elasticsearchService.indexArticleDocument(article.getId().toString(), articleJson).block();
+        elasticsearchService.indexArticleDocument(article.getId().toString(), article).block();
     }
 
     public List<ArticleResDto> searchArticle(Long boardId, String keyword) {

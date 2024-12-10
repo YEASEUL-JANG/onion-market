@@ -42,15 +42,13 @@ public class NoticeService {
     public Notice writeNotice(WriteNoticeDto dto){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        Optional<User> user = userRepository.findByUsername(userDetails.getUsername());
-        if(user.isEmpty()){
-            throw new ResourceNotFoundException("user not found");
-        }
+        User user = userRepository.findByUsername(userDetails.getUsername()).orElseThrow(()
+                -> new ResourceNotFoundException("user not found"));
         Notice notice = new Notice();
         notice.setTitle(dto.getTitle());
         notice.setContent(dto.getContent());
-        notice.setAuthor(user.get());
-        notice.setAuthorName(user.get().getUsername());
+        notice.setAuthor(user);
+        notice.setAuthorName(user.getUsername());
         noticeRepository.save(notice);
 
         return notice;
@@ -59,15 +57,13 @@ public class NoticeService {
     public Notice getNotice(Long noticeId) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-        Optional<User> user = userRepository.findByUsername(userDetails.getUsername());
-        if (user.isEmpty()) {
-            throw new ResourceNotFoundException("user not found");
-        }
+        User user = userRepository.findByUsername(userDetails.getUsername()).orElseThrow(()
+                -> new ResourceNotFoundException("user not found"));
         Optional<Notice> notice = noticeRepository.findById(noticeId);
         UserNotificationHistory userNotificationHistory = new UserNotificationHistory();
         userNotificationHistory.setTitle("공지사항이 작성되었습니다.");
         userNotificationHistory.setContent(notice.get().getTitle());
-        userNotificationHistory.setUserId(user.get().getId());
+        userNotificationHistory.setUserId(user.getId());
         userNotificationHistory.setIsRead(true);
         userNotificationHistory.setNoticeId(noticeId);
         userNotificationHistory.setCreatedDate(notice.get().getCreatedDate());
