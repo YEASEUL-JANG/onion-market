@@ -1,9 +1,9 @@
 import random
 import string
-import gevent
-from gevent import monkey
-monkey.patch_all()
-import requests
+# import gevent
+# from gevent import monkey
+# monkey.patch_all()
+# import requests
 from locust import HttpUser, task, constant
 
 
@@ -13,20 +13,20 @@ def generate_text(length=8):
     username = ''.join(random.choice(characters) for _ in range(length))
     return username
 
-def fetch_notice(client, notice_id, headers):
-    client.get(f"/api/notice/{notice_id}", headers=headers)
-
-def mark_history_read(client, history_id, headers):
-    client.post(f"/api/users/history?historyId={history_id}", headers=headers)
-
-def process_history(client, history, headers):
-    if not history["isRead"]:
-        history_id = history["id"]
-        notice_id = history.get("noticeId")
-        if notice_id and notice_id != 0:
-            fetch_notice(client, notice_id, headers)
-        else:
-            mark_history_read(client, history_id, headers)
+# def fetch_notice(client, notice_id, headers):
+#     client.get(f"/api/notice/{notice_id}", headers=headers)
+#
+# def mark_history_read(client, history_id, headers):
+#     client.post(f"/api/users/history?historyId={history_id}", headers=headers)
+#
+# def process_history(client, history, headers):
+#     if not history["isRead"]:
+#         history_id = history["id"]
+#         notice_id = history.get("noticeId")
+#         if notice_id and notice_id != 0:
+#             fetch_notice(client, notice_id, headers)
+#         else:
+#             mark_history_read(client, history_id, headers)
 
 
 class CommonUser(HttpUser):
@@ -83,18 +83,18 @@ class CommonUser(HttpUser):
         res = self.client.get(f"/api/users/history", headers=headers)
         history_list = res.json()
         if history_list:
-            jobs = [gevent.spawn(process_history, self.client, history, headers) for history in history_list]
-            gevent.joinall(jobs)
+#             jobs = [gevent.spawn(process_history, self.client, history, headers) for history in history_list]
+#             gevent.joinall(jobs)
 
-#             for history in history_list:
-#                 # 모든 알림 읽음 처리
-#                 if not history["isRead"]:
-#                     history_id = history["id"]
-#                     notice_id = history.get("noticeId")
-#                     if notice_id and notice_id != 0:  # noticeId가 유효한 경우에만 요청
-#                         self.client.get(f"/api/notice/{notice_id}", headers=headers)
-#                     else:
-#                         self.client.post(f"/api/users/history?historyId={history_id}", headers=headers)
+            for history in history_list:
+                # 모든 알림 읽음 처리
+                if not history["isRead"]:
+                    history_id = history["id"]
+                    notice_id = history.get("noticeId")
+                    if notice_id and notice_id != 0:  # noticeId가 유효한 경우에만 요청
+                        self.client.get(f"/api/notice/{notice_id}", headers=headers)
+                    else:
+                        self.client.post(f"/api/users/history?historyId={history_id}", headers=headers)
 
         # 게시글 검색(search) 1회 후 인기글 10회 조회     -> ElasticSearch / Redis
         keyword = generate_text(10)
