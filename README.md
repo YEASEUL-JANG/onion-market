@@ -77,7 +77,7 @@ Onion Market은 대규모 트래픽을 처리하는 중고 마켓 게시판을 �
   - 데이터 수정, 생성, 삭제 시 중복처리 방지 및 문제가 발생 시 롤백(@Transaction 처리)
   - AOP를 활용하여 중앙에서 에러 처리를 관리
   - 데이터베이스 인덱스 추가를 통한 조회 성능 최적화  
-  - [🔗 다른 기기 로그아웃을 위한 Blacklist 적용](https://www.notion.so/a10e578c4663461fa588267fdc64fe30?pvs=21)
+  - [🔗 다른 기기 로그아웃을 위한 Blacklist 적용](https://ysdlog.notion.site/JWT-a10e578c4663461fa588267fdc64fe30?pvs=4)
 
 ### 2단계: 게시글 검색 성능 개선
 
@@ -150,7 +150,7 @@ Onion Market은 대규모 트래픽을 처리하는 중고 마켓 게시판을 �
 
 ## Locust 를 활용한 부하테스트 및 성능 개선결과 정리
 
-[📜 Project_onion market_ 성능개선 결과테스트](https://www.notion.so/Project_onion-market_-158c8bc8fd3980828a4cd8c2fea5f7ad?pvs=21)
+[📜 Project_onion market_ 성능개선 결과테스트](https://ysdlog.notion.site/Project_onion-market_-158c8bc8fd3980828a4cd8c2fea5f7ad?pvs=4)
 
 ### 주요 성과
 
