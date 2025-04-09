@@ -6,6 +6,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -20,18 +21,12 @@ import java.time.ZoneId;
 import java.util.Date;
 
 @Component
+@RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtil jwtUtil;
     private final UserDetailsService userDetailsService;
     private final JwtBlacklistService jwtBlacklistService;  // 블랙리스트 서비스 추가
-
-
-    public JwtAuthenticationFilter(JwtUtil jwtUtil, UserDetailsService userDetailsService, JwtBlacklistService jwtBlacklistService) {
-        this.jwtUtil = jwtUtil;
-        this.userDetailsService = userDetailsService;
-        this.jwtBlacklistService = jwtBlacklistService;
-    }
 
     private String resolveToken(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
@@ -68,10 +63,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             LocalDateTime issuedAtDateTime = issuedAt.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
 
 
-            // 블랙리스트에 토큰이 있는지 확인
-            if (jwt != null && jwtBlacklistService.isTokenBlacklisted(username, issuedAtDateTime)) {
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);  // 블랙리스트에 있으면 401 Unauthorized 반환
-                return;  // 필터 체인을 더 이상 진행하지 않고 중단
+            // Redis 기반 블랙리스트 체크
+            if (jwtBlacklistService.isTokenBlacklisted(username, issuedAtDateTime)) {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED); // 401 Unauthorized
+                return;
             }
 
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
